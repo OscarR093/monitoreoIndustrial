@@ -1,22 +1,21 @@
-# Sistema de Monitoreo Industrial - Documentación de Sesión
+# Sistema de Monitoreo Industrial - Documentación de Desarrollo
 
-## Fecha: 2026-04-18
+## Fecha: 2026-04-19
 
 ## Arquitectura del Sistema
-
-El sistema de monitoreo industrial sigue una arquitectura de 3 capas:
 
 ```
 PLC (real o simulado) → Bridge → MQTT Broker (EMQX) → Suscriptores (API)
 ```
 
-### Componentes creados
+### Flujo de Datos
 
-1. **Broker MQTT**: Docker EMQX (puertos 1883/8883)
-2. **Bridge**: Script Python con hilos separados
-3. **Capa de datos**: Sensores con definiciones centralizadas
-4. **Modo desarrollo**: SimulacionPLC
-5. **Modo produccion**: ConexionPLC (placeholder para PLC real)
+1. **Bridge** lee datos del PLC (real via Modbus TCP o simulado)
+2. **Bridge** publica en topics MQTT:
+   - `industrial/{planta}/{area}/history` - datos históricos (cada 20 min)
+   - `industrial/{planta}/{area}/realtime` - datos en tiempo real (cada 2s, si START)
+3. **Suscriptores** reciben datos de topics history/realtime
+4. **Control** envía comandos START/STOP al topic control
 
 ---
 
@@ -26,123 +25,128 @@ PLC (real o simulado) → Bridge → MQTT Broker (EMQX) → Suscriptores (API)
 monitoreoIndustrial/
 ├── docker/
 │   └── docker-compose.yml    # EMQX broker
-├── src/bridge/
-│   ├── config.py           # Configuracion y variables de entorno
-│   ├── sensores.py        # Definiciones de sensores
-│   ├── plc_simulacion.py  # Simulador de datos (desarrollo)
-│   ├── plc_conexion.py   # Conexion PLC real (produccion)
-│   ├── mqtt.py          # Cliente MQTT
-│   ├── hilos.py         # Hilos historico y realtime
-│   └── main.py        # Punto de entrada
-├── .env                 # Variables de entorno
-├── .env.example       # Plantilla de variables
-└── requirements.txt   # Dependencias Python
+├── bridge/
+│   ├── .env                 # Variables de entorno
+│   ├── config.py            # Carga configuración
+│   ├── sensors.py           # Lista sensores
+│   ├── plc_connection.py   # Conexión PLC real (Modbus TCP)
+│   ├── plc_simulation.py  # Simulación valores
+│   ├── mqtt_client.py     # Cliente MQTT
+│   ├── threads.py         # Hilos history y realtime
+│   ├── main.py           # Punto de entrada
+│   ├── control_client.py # Enviador comandos START/STOP
+│   ├── test_client.py   # Suscriptor de pruebas
+│   ├── requirements.txt # Dependencias
+│   └── README.md      # Documentación bridge
+├── README.md         # Overview del proyecto
+└── AGENTS.md        # Este archivo
 ```
 
 ---
 
 ## Configuración
 
-### Variables de Entorno
+### Variables de Entorno (.env)
 
 | Variable | Default | Descripción |
 |----------|---------|-------------|
 | MQTT_BROKER | localhost | Broker MQTT |
 | MQTT_PORT | 1883 | Puerto plain |
-| MQTTS_PORT | 8883 | Puerto TLS |
-| REAL_TIME_INTERVAL | 2 | Intervalo realtime (segundos) |
-| HISTORIC_INTERVAL | 1200 | Intervalo historico (1200s = 20min) |
-| PLANTA | p1 | Identificador de planta |
-| AREAS | a1 | Areas (comma-separated) |
-| SENSOR_COUNT | 4 | Sensores por area |
-| SIMULATION | true | Modo simulacion |
 | PLC_HOST | 192.168.1.100 | IP del PLC |
-| PLC_PORT | 502 | Puerto Modbus |
+| PLC_PORT | 502 | Puerto Modbus TCP |
 | PLC_UNIT_ID | 1 | ID unidad Modbus |
+| PLANTA | p1 | Identificador de planta |
+| AREA | a1 | Identificador de área |
+| HISTORY_INTERVAL | 1200 | Intervalo histórico (1200s = 20 min) |
+| REALTIME_INTERVAL | 2 | Intervalo realtime (2s) |
+| SIMULATION | true | Usar simulación en vez de PLC real |
 
 ### Topics MQTT
 
-- Datos sensores: `industrial/{planta}/{area}/sensores`
-- Control área: `industrial/{planta}/{area}/control`
-- Control general: `industrial/{planta}/control`
+- **History**: `industrial/{planta}/{area}/history`
+- **Realtime**: `industrial/{planta}/{area}/realtime`
+- **Control**: `industrial/{planta}/{area}/control`
 
 ### Comandos de Control
 
-- `START`: Activa modo tiempo real
-- `STOP`: Desactiva modo tiempo real
+- `START`: Activa publicación realtime
+- `STOP`: Desactiva publicación realtime
 
 ---
 
-## Modulos del Bridge
+## Módulos del Bridge
 
 ### config.py
-Carga variables de entorno y provee configuración centralizada.
+Carga variables de entorno.
 
 **Funciones:**
-- `get_config()`: Retorna diccionario con toda la configuración
+- `get_config()` - retorna diccionario de configuración
+- `get_topics()` - retorna diccionario de topics
+- `get_topics_from_params(planta, area)` - retorna topics para planta/área específicos
 
-### sensores.py
-Define los sensores del sistema en una lista centralizada.
+### sensors.py
+Define los sensores del sistema.
 
 **Estructura:**
 ```python
 SENSORES = [
-    {"id": "s1", "nombre": "Temperatura", "area": "a1", "planta": "p1"},
-    {"id": "s2", "nombre": "Presion", "area": "a1", "planta": "p1"},
-    {"id": "s3", "nombre": "Flujo", "area": "a1", "planta": "p1"},
-    {"id": "s4", "nombre": "Nivel", "area": "a1", "planta": "p1"},
+    {"id": "s1", "registro": 0},
+    {"id": "s2", "registro": 1},
+    {"id": "s3", "registro": 2},
+    {"id": "s4", "registro": 3},
 ]
 ```
 
 **Funciones:**
-- `get_sensores_by_area(area, planta)`: Sensores por área
-- `get_sensores_by_planta(planta)`: Sensores por planta
-- `get_sensor_by_id(sensor_id)`: Sensor por ID
+- `get_sensores()` - retorna lista de sensores
+- `get_sensor_ids()` - retorna solo ids de sensores
+- `get_sensores_list()` - retorna tuplas (id, registro)
 
-### plc_simulacion.py
-Simula datos del PLC para desarrollo.
-
-**Clases:**
-- `SensorSimulado`: Sensor con valores incrementales (100-200)
-- `PLCBridge`: Puente de simulación
-
-**Características:**
-- Valores incrementales entre 100 y 200
-- Variación aleatoria de ±2
-- Timestamp Unix
-
-### plc_conexion.py
+### plc_connection.py
 Conexión al PLC real via pymodbus.
 
 **Clases:**
-- `PLCBridge`: Puente Modbus TCP
+- `PLCConnection` - cliente Modbus TCP
 
-**Requisitos:**
-- PLC accesible via Modbus TCP
-- pip install pymodbus
+**Métodos:**
+- `conectar()` - establece conexión
+- `desconectar()` - cierra conexión
+- `leer_datos()` - lee registros y retorna lista de datos
 
-### mqtt.py
-Cliente MQTT con suscripción a topics de control.
+### plc_simulation.py
+Simula datos del PLC para desarrollo.
 
 **Clases:**
-- `MQTTClient`: Cliente paho-mqtt
+- `PLCSimulation` - genera valores aleatorios 100-200
 
 **Características:**
-- Conexión al broker
-- Suscripción a control por área y general
-- Callback para START/STOP
+- Valores aleatorios entre 100 y 200
+- Variación aleatoria de ±2 por lectura
+- Timestamp Unix
 
-### hilos.py
+### mqtt_client.py
+Cliente MQTT con publicación y suscripción.
+
+**Clases:**
+- `MQTTClient` - wrapper de paho-mqtt
+
+**Métodos:**
+- `conectar()` - conecta al broker
+- `desconectar()` - desconecta
+- `suscribir(topic)` - suscribe a topic
+- `publicar(topic, payload)` - publicaJSON
+
+### threads.py
 Hilos separados para publicación simultánea.
 
 **Clases:**
-- `HiloHistorico`: Publicación periódica (siempre activo)
-- `HiloRealTime`: Publicación rápida (activable)
+- `HiloHistory` - publicación periódica (siempre activo)
+- `HiloRealTime` - publicación rápida (activable con START/STOP)
 
 **Características:**
 - Hilos daemon
 - No bloquean entre sí
-- Configurables via intervalos
+- Intervalos configurables
 
 ### main.py
 Orquestador principal del bridge.
@@ -151,8 +155,10 @@ Orquestador principal del bridge.
 1. Cargar configuración
 2. Crear PLC (simulación o real)
 3. Conectar a MQTT
-4. Iniciar hilos
-5. Mantener proceso vivo
+4. Suscribirse a topic control
+5. Iniciar hilos
+6. procesar comandos START/STOP
+7. Mantener proceso vivo
 
 ---
 
@@ -166,44 +172,56 @@ docker compose up -d
 
 ### Iniciar Bridge
 ```bash
-# Con un área
-python src/bridge/main.py
+# Modo desarrollo (simulación)
+python bridge/main.py
 
-# Con dos áreas (instancia separada)
-AREAS=a1 python src/bridge/main.py
+# Modo producción (PLC real)
+SIMULATION=false python bridge/main.py
 
-# Modo producción
-SIMULATION=false python src/bridge/main.py
+# Intervalos personalizados
+HISTORY_INTERVAL=300 REALTIME_INTERVAL=1 python bridge/main.py
 
-# Con intervalos personalizados
-REAL_TIME_INTERVAL=1 HISTORIC_INTERVAL=300 python src/bridge/main.py
+# Para otra área
+AREA=a2 python bridge/main.py
 ```
 
-### Enviar control
+### Controlar Publicación Realtime
 ```bash
 # Activar realtime
-mosquitto_pub -t "industrial/p1/a1/control" -m "START"
+python bridge/control_client.py START
 
 # Desactivar realtime
-mosquitto_pub -t "industrial/p1/a1/control" -m "STOP"
+python bridge/control_client.py STOP
 
-# Control general (todas las áreas)
-mosquitto_pub -t "industrial/p1/control" -m "START"
+# Para otra área
+AREA=a2 python bridge/control_client.py START
+```
+
+### Observar Datos
+```bash
+# Suscribirse a history y realtime
+python bridge/test_client.py
 ```
 
 ---
 
 ## Formato de Datos
 
+### JSONPublicado en Topics
+
 ```json
-{
-    "area": "a1",
-    "planta": "p1",
-    "sensor": "s1",
-    "nombre": "Temperatura",
-    "valor": 123.45,
-    "timestamp": 1776544776.69
-}
+[
+    {
+        "sensor": "s1",
+        "valor": 123.45,
+        "timestamp": 1713500000.0
+    },
+    {
+        "sensor": "s2",
+        "valor": 124.67,
+        "timestamp": 1713500000.0
+    }
+]
 ```
 
 ---
@@ -211,22 +229,26 @@ mosquitto_pub -t "industrial/p1/control" -m "START"
 ## Pruebas Realizadas
 
 1. ✅ Bridge iniciado correctamente
-2. ✅ Publicación histórica (20 min)
-3. ✅ Control START activa realtime
-4. ✅ Publicación realtime (2s)
-5. ✅ Control STOP desactiva realtime
-6. ✅ Datos con nombre de sensor
-7. ✅ Hilos simultáneos no bloqueantes
+2. ✅ Conexión a MQTT establecida
+3. ✅ Suscripción a topic control
+4. ✅ Publicación history cada X segundos
+5. ✅ Control START activa realtime
+6. ✅ Publicación realtime cada X segundos
+7. ✅ Control STOP desactiva realtime
+8. ✅ Datos con sensor, valor y timestamp
+9. ✅ Hilos simultáneos no bloqueantes
+10. ✅ Múltiples instancias para diferentes áreas
 
 ---
 
 ## Notas para Desarrollo Futuro
 
-1. **PLC Real**: Cuando llegue el PLC, configurar PLC_HOST, PLC_PORT, PLC_UNIT_ID
-2. **Múltiples Áreas**: Ejecutar instancia separadas del script
-3. **Persistencia**: Agregar base de datos cuando llegue la capa API
+1. **PLC Real**: Configurar PLC_HOST, PLC_PORT, PLC_UNIT_ID en .env
+2. **Múltiples Áreas**: Ejecutar instancia separada del script por área
+3. **Agregar Sensores**: Editar sensors.py, agregar al数组 SENSORES
 4. **Seguridad**: Configurar MQTT TLS para producción
 5. **Logs**: Implementar rotación de logs
+6. **Autenticación MQTT**: Agregar usuario/contraseña
 
 ---
 
@@ -240,26 +262,6 @@ pymodbus>=3.0.0  # Solo para producción
 
 ---
 
-## Comandos de Git
-
-### Commit
-
-Cuando el usuario escriba "commit", crear un commit con los cambios realizados.
-
-```bash
-# Ver estado
-git status
-
-# Ver cambios
-git diff --stat
-
-# Commit con mensaje automático
-git add -A
-git commit -m "<descripcion del trabajo>"
-```
-
----
-
 ## Autores
 
-Sistema Monitoreo Industrial - 2026-04-18
+Sistema Monitoreo Industrial - 2026-04-19
