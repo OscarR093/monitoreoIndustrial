@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace api.Models;
 
 public class DatoSensor
@@ -8,5 +10,6 @@ public class DatoSensor
     public long Timestamp { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
+    [JsonIgnore]
     public Sensor Sensor { get; set; } = null!;
 }

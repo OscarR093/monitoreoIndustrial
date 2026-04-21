@@ -79,3 +79,21 @@ _global.json
 .vs-code/
 !/.vscode/launch.json
 !/.vscode/tasks.json
+
+# Install scripts
+dotnet-install.sh
+
+# Local notes
+issue.md
+next_steps.md
+*.md.bak
+
+# Node.js / Frontend
+node_modules/
+dist/
+dist-ssr/
+*.local
+.vite/
+.npm/
+.yarn/
+.pnpm-store/

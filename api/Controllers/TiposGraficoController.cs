@@ -19,6 +19,6 @@ public class TiposGraficoController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<IEnumerable<TipoGrafico>>> GetTiposGrafico()
     {
-        return await _context.TiposGraficos.ToListAsync();
+        return await _context.TipoGraficos.ToListAsync();
     }
 }

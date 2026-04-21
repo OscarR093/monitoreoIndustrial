@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace api.Models;
 
 public class Sensor
@@ -11,8 +13,12 @@ public class Sensor
     public int UnidadId { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
+    [JsonIgnore]
     public Area Area { get; set; } = null!;
+    [JsonIgnore]
     public TipoGrafico TipoGrafico { get; set; } = null!;
+    [JsonIgnore]
     public Unidad Unidad { get; set; } = null!;
+    [JsonIgnore]
     public ICollection<DatoSensor> Datos { get; set; } = new List<DatoSensor>();
 }

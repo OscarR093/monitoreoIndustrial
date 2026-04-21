@@ -88,14 +88,16 @@ public class AppDbContext : DbContext
         SeedData(modelBuilder);
     }
 
+    private static readonly DateTime FixedDate = new DateTime(2026, 4, 20, 9, 8, 3, DateTimeKind.Utc);
+
     private void SeedData(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Planta>().HasData(
-            new Planta { Id = 1, Nombre = "Planta 1", Codigo = "p1", CreatedAt = DateTime.UtcNow }
+            new Planta { Id = 1, Nombre = "Planta 1", Codigo = "p1", CreatedAt = FixedDate }
         );
 
         modelBuilder.Entity<Area>().HasData(
-            new Area { Id = 1, PlantaId = 1, Nombre = "Área 1", Codigo = "a1", CreatedAt = DateTime.UtcNow }
+            new Area { Id = 1, PlantaId = 1, Nombre = "Área 1", Codigo = "a1", CreatedAt = FixedDate }
         );
 
         modelBuilder.Entity<TipoGrafico>().HasData(

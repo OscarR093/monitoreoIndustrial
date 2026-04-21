@@ -1,11 +1,16 @@
 # Sistema de Monitoreo Industrial - Documentación de Desarrollo
 
-## Fecha: 2026-04-19
+## Fecha: 2026-04-21
+
+## Context7
+
+Always use context7 when I need library/API documentation, code generation, 
+setup or configuration steps without me having to explicitly ask.
 
 ## Arquitectura del Sistema
 
 ```
-PLC (real o simulado) → Bridge → MQTT Broker (EMQX) → Suscriptores (API)
+PLC (real o simulado) → Bridge → MQTT Broker (EMQX) → API (.NET) ↔ WebSocket ↔ Frontend
 ```
 
 ### Flujo de Datos
@@ -14,8 +19,10 @@ PLC (real o simulado) → Bridge → MQTT Broker (EMQX) → Suscriptores (API)
 2. **Bridge** publica en topics MQTT:
    - `industrial/{planta}/{area}/history` - datos históricos (cada 20 min)
    - `industrial/{planta}/{area}/realtime` - datos en tiempo real (cada 2s, si START)
-3. **Suscriptores** reciben datos de topics history/realtime
-4. **Control** envía comandos START/STOP al topic control
+3. **API** suscrita a topics MQTT recibe datos y guarda en PostgreSQL
+4. **WebSocket** detecta cliente conectado → publica "START" en topic control
+5. **WebSocket** detecta cliente desconectado → publica "STOP"
+6. **Frontend** recibe datos realtime via WebSocket y los visualiza
 
 ---
 
@@ -24,22 +31,34 @@ PLC (real o simulado) → Bridge → MQTT Broker (EMQX) → Suscriptores (API)
 ```
 monitoreoIndustrial/
 ├── docker/
-│   └── docker-compose.yml    # EMQX broker
-├── bridge/
-│   ├── .env                 # Variables de entorno
-│   ├── config.py            # Carga configuración
-│   ├── sensors.py           # Lista sensores
-│   ├── plc_connection.py   # Conexión PLC real (Modbus TCP)
-│   ├── plc_simulation.py  # Simulación valores
-│   ├── mqtt_client.py     # Cliente MQTT
-│   ├── threads.py         # Hilos history y realtime
-│   ├── main.py           # Punto de entrada
-│   ├── control_client.py # Enviador comandos START/STOP
-│   ├── test_client.py   # Suscriptor de pruebas
-│   ├── requirements.txt # Dependencias
-│   └── README.md      # Documentación bridge
-├── README.md         # Overview del proyecto
-└── AGENTS.md        # Este archivo
+│   └── docker-compose.yml    # EMQX + PostgreSQL
+├── api/                       # .NET Core Web API (.NET 10)
+│   ├── Models/
+│   │   ├── Planta.cs
+│   │   ├── Area.cs
+│   │   ├── TipoGrafico.cs
+│   │   ├── Unidad.cs
+│   │   ├── Sensor.cs
+│   │   └── DatoSensor.cs
+│   ├── Data/
+│   │   └── AppDbContext.cs
+│   ├── Controllers/
+│   │   ├── PlantasController.cs
+│   │   ├── AreasController.cs
+│   │   ├── SensoresController.cs
+│   │   ├── DatosController.cs
+│   │   ├── TiposGraficoController.cs
+│   │   ├── UnidadesController.cs
+│   │   └── WebSocketController.cs
+│   ├── Services/
+│   │   ├── MqttSubscriberService.cs
+│   │   └── WebSocketRealtimeService.cs
+│   ├── Migrations/
+│   └── api.csproj
+├── bridge/                    # Python bridge
+├── frontend/                  # React frontend (temporal, descartable)
+├── next_steps.md
+└── AGENTS.md
 ```
 
 ---
@@ -69,7 +88,7 @@ monitoreoIndustrial/
 
 ### Comandos de Control
 
-- `START`: Activa publicación realtime
+- `START`: Activa publicación realtime desde el bridge
 - `STOP`: Desactiva publicación realtime
 
 ---
@@ -79,128 +98,53 @@ monitoreoIndustrial/
 ### config.py
 Carga variables de entorno.
 
-**Funciones:**
-- `get_config()` - retorna diccionario de configuración
-- `get_topics()` - retorna diccionario de topics
-- `get_topics_from_params(planta, area)` - retorna topics para planta/área específicos
-
 ### sensors.py
 Define los sensores del sistema.
-
-**Estructura:**
-```python
-SENSORES = [
-    {"id": "s1", "registro": 0},
-    {"id": "s2", "registro": 1},
-    {"id": "s3", "registro": 2},
-    {"id": "s4", "registro": 3},
-]
-```
-
-**Funciones:**
-- `get_sensores()` - retorna lista de sensores
-- `get_sensor_ids()` - retorna solo ids de sensores
-- `get_sensores_list()` - retorna tuplas (id, registro)
 
 ### plc_connection.py
 Conexión al PLC real via pymodbus.
 
-**Clases:**
-- `PLCConnection` - cliente Modbus TCP
-
-**Métodos:**
-- `conectar()` - establece conexión
-- `desconectar()` - cierra conexión
-- `leer_datos()` - lee registros y retorna lista de datos
-
 ### plc_simulation.py
 Simula datos del PLC para desarrollo.
-
-**Clases:**
-- `PLCSimulation` - genera valores aleatorios 100-200
-
-**Características:**
-- Valores aleatorios entre 100 y 200
-- Variación aleatoria de ±2 por lectura
-- Timestamp Unix
 
 ### mqtt_client.py
 Cliente MQTT con publicación y suscripción.
 
-**Clases:**
-- `MQTTClient` - wrapper de paho-mqtt
-
-**Métodos:**
-- `conectar()` - conecta al broker
-- `desconectar()` - desconecta
-- `suscribir(topic)` - suscribe a topic
-- `publicar(topic, payload)` - publicaJSON
-
 ### threads.py
 Hilos separados para publicación simultánea.
-
-**Clases:**
-- `HiloHistory` - publicación periódica (siempre activo)
-- `HiloRealTime` - publicación rápida (activable con START/STOP)
-
-**Características:**
-- Hilos daemon
-- No bloquean entre sí
-- Intervalos configurables
 
 ### main.py
 Orquestador principal del bridge.
 
-**Flujo:**
-1. Cargar configuración
-2. Crear PLC (simulación o real)
-3. Conectar a MQTT
-4. Suscribirse a topic control
-5. Iniciar hilos
-6. procesar comandos START/STOP
-7. Mantener proceso vivo
+### control_client.py
+Cliente para enviar comandos START/STOP.
+
+### test_client.py
+Suscriptor de pruebas.
 
 ---
 
 ## Ejecución
 
-### Iniciar EMQX
+### Iniciar EMQX y PostgreSQL
 ```bash
 cd docker
 docker compose up -d
 ```
 
+### Iniciar API
+```bash
+cd api && dotnet run
+```
+
 ### Iniciar Bridge
 ```bash
-# Modo desarrollo (simulación)
 python bridge/main.py
-
-# Modo producción (PLC real)
-SIMULATION=false python bridge/main.py
-
-# Intervalos personalizados
-HISTORY_INTERVAL=300 REALTIME_INTERVAL=1 python bridge/main.py
-
-# Para otra área
-AREA=a2 python bridge/main.py
 ```
 
-### Controlar Publicación Realtime
+### Iniciar Frontend (descartable)
 ```bash
-# Activar realtime
-python bridge/control_client.py START
-
-# Desactivar realtime
-python bridge/control_client.py STOP
-
-# Para otra área
-AREA=a2 python bridge/control_client.py START
-```
-
-### Observar Datos
-```bash
-# Suscribirse a history y realtime
-python bridge/test_client.py
+cd frontend && npm run dev
 ```
 
 ---
@@ -226,42 +170,171 @@ python bridge/test_client.py
 
 ---
 
-## Pruebas Realizadas
+## API (.NET Core 10)
 
-1. ✅ Bridge iniciado correctamente
-2. ✅ Conexión a MQTT establecida
-3. ✅ Suscripción a topic control
-4. ✅ Publicación history cada X segundos
-5. ✅ Control START activa realtime
-6. ✅ Publicación realtime cada X segundos
-7. ✅ Control STOP desactiva realtime
-8. ✅ Datos con sensor, valor y timestamp
-9. ✅ Hilos simultáneos no bloqueantes
-10. ✅ Múltiples instancias para diferentes áreas
+### Stack
+
+- .NET 10 (Web API)
+- PostgreSQL (Entity Framework Core)
+- MQTTnet 5.x (suscriptor MQTT)
+- System.Net.WebSockets
+
+### Endpoints REST
+
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| GET | `/api/plantas` | Listar plantas |
+| GET | `/api/areas` | Listar áreas (filtro: planta) |
+| GET | `/api/sensores` | Listar sensores (filtros: planta, area) |
+| POST | `/api/sensores` | Crear sensor |
+| PUT | `/api/sensores/{id}` | Actualizar sensor |
+| DELETE | `/api/sensores/{id}` | Eliminar sensor |
+| GET | `/api/datos` | Datos históricos (filtros: planta, area, limit) |
+| POST | `/api/datos` | Crear dato |
+| GET | `/api/tipos-grafico` | Listar tipos de gráfico |
+| GET | `/api/unidades` | Listar unidades |
+
+### WebSocket
+
+- **Endpoint**: `ws://host:5000/ws/realtime?planta=p1&area=a1`
+- **Control automático**: Al conectar publica START, al desconectar STOP
+- **Forward**: Datos realtime del bridge al cliente
+
+### Servicios
+
+#### MqttSubscriberService
+- Suscrito a `industrial/+/+/history` y `industrial/+/+/realtime`
+- Guarda datos en PostgreSQL
+- Auto-crea sensores nuevos si no existen
+
+#### WebSocketRealtimeService
+- Mantiene conexiones WebSocket por planta/área
+- Publica START/STOP en topics de control
+- Reenvía datos realtime a clientes conectados
 
 ---
 
-## Notas para Desarrollo Futuro
+## Base de Datos
 
-1. **PLC Real**: Configurar PLC_HOST, PLC_PORT, PLC_UNIT_ID en .env
-2. **Múltiples Áreas**: Ejecutar instancia separada del script por área
-3. **Agregar Sensores**: Editar sensors.py, agregar al数组 SENSORES
-4. **Seguridad**: Configurar MQTT TLS para producción
-5. **Logs**: Implementar rotación de logs
-6. **Autenticación MQTT**: Agregar usuario/contraseña
+### Tablas
 
----
+```sql
+-- Plantas
+CREATE TABLE plantas (
+    id SERIAL PRIMARY KEY,
+    nombre VARCHAR(100),
+    codigo VARCHAR(20) UNIQUE,
+    created_at TIMESTAMP DEFAULT NOW()
+);
 
-## Dependencias
+-- Áreas
+CREATE TABLE areas (
+    id SERIAL PRIMARY KEY,
+    planta_id INT REFERENCES plantas(id),
+    nombre VARCHAR(100),
+    codigo VARCHAR(20),
+    created_at TIMESTAMP DEFAULT NOW()
+);
 
+-- Tipos de Gráfico
+CREATE TABLE tipos_graficos (
+    id SERIAL PRIMARY KEY,
+    nombre VARCHAR(50),
+    descripcion VARCHAR(200),
+    widget VARCHAR(50)
+);
+
+-- Unidades
+CREATE TABLE unidades (
+    id SERIAL PRIMARY KEY,
+    nombre VARCHAR(50),
+    simbolo VARCHAR(20),
+    descripcion VARCHAR(200)
+);
+
+-- Sensores
+CREATE TABLE sensores (
+    id SERIAL PRIMARY KEY,
+    area_id INT REFERENCES areas(id),
+    sensor_id VARCHAR(20),
+    registro INT,
+    nombre VARCHAR(100),
+    tipo_grafico_id INT REFERENCES tipos_graficos(id),
+    unidad_id INT REFERENCES unidades(id),
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Datos de Sensores
+CREATE TABLE datos_sensores (
+    id SERIAL PRIMARY KEY,
+    sensor_id INT REFERENCES sensores(id),
+    valor DECIMAL(10,2),
+    timestamp BIGINT,
+    created_at TIMESTAMP DEFAULT NOW()
+);
 ```
-paho-mqtt>=1.6.1
-python-dotenv>=1.0.0
-pymodbus>=3.0.0  # Solo para producción
+
+### Datos Iniciales
+
+**Plantas:**
+- Planta 1 (codigo: p1)
+
+**Áreas:**
+- Área 1 (codigo: a1) → planta p1
+
+**TipoGráficos:**
+- línea (Time Series) → widget: line
+- gauge (Indicador) → widget: gauge
+- bar (Barras) → widget: bar
+
+**Unidades:**
+- Temperatura (°C), Presión (PSI), Voltaje (V), Corriente (A), Porcentaje (%), RPM
+
+---
+
+## Estado del Sistema (2026-04-21)
+
+### Completado
+
+- [x] API .NET Core 10 funcional
+- [x] PostgreSQL con Entity Framework
+- [x] MqttSubscriberService
+- [x] WebSocket con control START/STOP
+- [x] Endpoints REST completos
+- [x] Frontend demo (temporal, descartable)
+
+### Pendiente ( próximos pasos)
+
+- [ ] Mejorar bridge (robustez, manejo de errores, reconexión)
+- [ ] Completar API (validaciones, seguridad)
+- [ ] Construir frontend real de la plataforma
+
+---
+
+## Comandos Útiles
+
+```bash
+# Compilar API
+export PATH="$PATH:/home/oscarr093/.dotnet" && cd api && dotnet build
+
+# Ejecutar API
+export PATH="$PATH:/home/oscarr093/.dotnet" && cd api && dotnet run
+
+# Ver logs de la API
+tail -f /tmp/api.log
+
+# Ver logs del bridge
+tail -f /tmp/bridge.log
+
+# Crear migración
+export PATH="$PATH:/home/oscarr093/.dotnet:/home/oscarr093/.dotnet/tools" && cd api && dotnet ef migrations add Nombre
+
+# Aplicar migración
+export PATH="$PATH:/home/oscarr093/.dotnet:/home/oscarr093/.dotnet/tools" && cd api && dotnet ef database update
 ```
 
 ---
 
 ## Autores
 
-Sistema Monitoreo Industrial - 2026-04-19
+Sistema Monitoreo Industrial - 2026-04-21

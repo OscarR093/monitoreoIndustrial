@@ -17,7 +17,28 @@ services:
     volumes:
       - emqx_data:/opt/emqx/data
       - emqx_log:/opt/emqx/log
+    networks:
+      - industrial-network
+
+  postgres:
+    image: postgres:16
+    container_name: postgres
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: monitoreo123
+      POSTGRES_DB: monitoreoindustrial
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - industrial-network
+
+networks:
+  industrial-network:
+    driver: bridge
 
 volumes:
   emqx_data:
   emqx_log:
+  postgres_data:

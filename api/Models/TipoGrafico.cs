@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace api.Models;
 
 public class TipoGrafico
@@ -7,5 +9,6 @@ public class TipoGrafico
     public string? Descripcion { get; set; }
     public string Widget { get; set; } = string.Empty;
 
+    [JsonIgnore]
     public ICollection<Sensor> Sensores { get; set; } = new List<Sensor>();
 }

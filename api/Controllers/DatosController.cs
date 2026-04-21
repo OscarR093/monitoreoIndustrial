@@ -5,6 +5,23 @@ using api.Models;
 
 namespace api.Controllers;
 
+public class DatoSensorDto
+{
+    public int Id { get; set; }
+    public int SensorId { get; set; }
+    public decimal Valor { get; set; }
+    public long Timestamp { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public SensorDto? Sensor { get; set; }
+}
+
+public class SensorDto
+{
+    public int Id { get; set; }
+    public string SensorId { get; set; } = "";
+    public string Nombre { get; set; } = "";
+}
+
 [ApiController]
 [Route("api/[controller]")]
 public class DatosController : ControllerBase
@@ -17,7 +34,7 @@ public class DatosController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<DatoSensor>>> GetDatos(
+    public async Task<ActionResult<IEnumerable<DatoSensorDto>>> GetDatos(
         [FromQuery] int? sensorId,
         [FromQuery] string? planta,
         [FromQuery] string? area,
@@ -35,10 +52,27 @@ public class DatosController : ControllerBase
         if (!string.IsNullOrEmpty(area))
             query = query.Where(d => d.Sensor!.Area.Codigo == area);
 
-        return await query
+        var datos = await query
             .OrderByDescending(d => d.Timestamp)
             .Take(limit)
             .ToListAsync();
+
+        var result = datos.Select(d => new DatoSensorDto
+        {
+            Id = d.Id,
+            SensorId = d.SensorId,
+            Valor = d.Valor,
+            Timestamp = d.Timestamp,
+            CreatedAt = d.CreatedAt,
+            Sensor = d.Sensor != null ? new SensorDto
+            {
+                Id = d.Sensor.Id,
+                SensorId = d.Sensor.SensorId,
+                Nombre = d.Sensor.Nombre
+            } : null
+        }).ToList();
+
+        return result;
     }
 
     [HttpPost]

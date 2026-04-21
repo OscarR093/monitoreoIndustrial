@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace api.Models;
 
 public class Planta
@@ -7,5 +9,6 @@ public class Planta
     public string Codigo { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
+    [JsonIgnore]
     public ICollection<Area> Areas { get; set; } = new List<Area>();
 }

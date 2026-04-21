@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace api.Models;
 
 public class Unidad
@@ -7,5 +9,6 @@ public class Unidad
     public string Simbolo { get; set; } = string.Empty;
     public string? Descripcion { get; set; }
 
+    [JsonIgnore]
     public ICollection<Sensor> Sensores { get; set; } = new List<Sensor>();
 }

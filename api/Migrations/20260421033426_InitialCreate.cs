@@ -143,7 +143,7 @@ namespace api.Migrations
             migrationBuilder.InsertData(
                 table: "Plantas",
                 columns: new[] { "Id", "Codigo", "CreatedAt", "Nombre" },
-                values: new object[] { 1, "p1", new DateTime(2026, 4, 20, 9, 8, 3, 608, DateTimeKind.Utc).AddTicks(1166), "Planta 1" });
+                values: new object[] { 1, "p1", new DateTime(2026, 4, 20, 9, 8, 3, 0, DateTimeKind.Utc), "Planta 1" });
 
             migrationBuilder.InsertData(
                 table: "TipoGraficos",
@@ -171,7 +171,7 @@ namespace api.Migrations
             migrationBuilder.InsertData(
                 table: "Areas",
                 columns: new[] { "Id", "Codigo", "CreatedAt", "Nombre", "PlantaId" },
-                values: new object[] { 1, "a1", new DateTime(2026, 4, 20, 9, 8, 3, 608, DateTimeKind.Utc).AddTicks(1239), "Área 1", 1 });
+                values: new object[] { 1, "a1", new DateTime(2026, 4, 20, 9, 8, 3, 0, DateTimeKind.Utc), "Área 1", 1 });
 
             migrationBuilder.CreateIndex(
                 name: "IX_Areas_PlantaId",

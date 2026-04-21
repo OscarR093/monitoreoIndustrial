@@ -28,10 +28,10 @@ public class SensoresController : ControllerBase
             .Include(s => s.Unidad)
             .AsQueryable();
 
-        if (!string.IsNullOrEmpty(planta))
-            query = query.Where(s => s.Area.Planta.Codigo == planta);
         if (!string.IsNullOrEmpty(area))
             query = query.Where(s => s.Area.Codigo == area);
+        else if (!string.IsNullOrEmpty(planta))
+            query = query.Where(s => s.Area.Planta.Codigo == planta);
 
         return await query.ToListAsync();
     }

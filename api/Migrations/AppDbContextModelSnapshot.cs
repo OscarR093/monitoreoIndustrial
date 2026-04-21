@@ -17,7 +17,7 @@ namespace api.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.11")
+                .HasAnnotation("ProductVersion", "10.0.4")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -57,7 +57,7 @@ namespace api.Migrations
                         {
                             Id = 1,
                             Codigo = "a1",
-                            CreatedAt = new DateTime(2026, 4, 20, 9, 8, 3, 608, DateTimeKind.Utc).AddTicks(1239),
+                            CreatedAt = new DateTime(2026, 4, 20, 9, 8, 3, 0, DateTimeKind.Utc),
                             Nombre = "Área 1",
                             PlantaId = 1
                         });
@@ -126,7 +126,7 @@ namespace api.Migrations
                         {
                             Id = 1,
                             Codigo = "p1",
-                            CreatedAt = new DateTime(2026, 4, 20, 9, 8, 3, 608, DateTimeKind.Utc).AddTicks(1166),
+                            CreatedAt = new DateTime(2026, 4, 20, 9, 8, 3, 0, DateTimeKind.Utc),
                             Nombre = "Planta 1"
                         });
                 });
