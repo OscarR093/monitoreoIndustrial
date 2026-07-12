@@ -13,6 +13,7 @@ public class AppDbContext : DbContext
     public DbSet<Unidad> Unidades => Set<Unidad>();
     public DbSet<Sensor> Sensores => Set<Sensor>();
     public DbSet<DatoSensor> DatosSensores => Set<DatoSensor>();
+    public DbSet<Usuario> Usuarios => Set<Usuario>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -83,6 +84,22 @@ public class AppDbContext : DbContext
                   .OnDelete(DeleteBehavior.Cascade);
             entity.HasIndex(e => e.SensorId);
             entity.HasIndex(e => e.Timestamp);
+        });
+
+        modelBuilder.Entity<Usuario>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Username).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.PasswordHash).IsRequired();
+            entity.Property(e => e.Rol).IsRequired().HasMaxLength(20);
+            entity.Property(e => e.NombreCompleto).HasMaxLength(200);
+            entity.Property(e => e.Email).HasMaxLength(200);
+            entity.Property(e => e.Telefono).HasMaxLength(20);
+            entity.HasIndex(e => e.Username).IsUnique();
+            entity.HasOne(e => e.CreadoPor)
+                  .WithMany(u => u.UsuariosCreados)
+                  .HasForeignKey(e => e.CreadoPorId)
+                  .OnDelete(DeleteBehavior.Restrict);
         });
 
         SeedData(modelBuilder);

@@ -12,6 +12,9 @@ def get_config():
         _config_cache = {
             "mqtt_broker": os.getenv("MQTT_BROKER", "localhost"),
             "mqtt_port": int(os.getenv("MQTT_PORT", "1883")),
+            "mqtt_use_tls": os.getenv("MQTT_USE_TLS", "false").lower() == "true",
+            "mqtt_user": os.getenv("MQTT_USER", ""),
+            "mqtt_pass": os.getenv("MQTT_PASS", ""),
             "plc_host": os.getenv("PLC_HOST", "192.168.1.100"),
             "plc_port": int(os.getenv("PLC_PORT", "502")),
             "plc_unit_id": int(os.getenv("PLC_UNIT_ID", "1")),

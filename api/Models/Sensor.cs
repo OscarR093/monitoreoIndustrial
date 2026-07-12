@@ -14,11 +14,11 @@ public class Sensor
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     [JsonIgnore]
-    public Area Area { get; set; } = null!;
+    public Area? Area { get; set; }
     [JsonIgnore]
-    public TipoGrafico TipoGrafico { get; set; } = null!;
+    public TipoGrafico? TipoGrafico { get; set; }
     [JsonIgnore]
-    public Unidad Unidad { get; set; } = null!;
+    public Unidad? Unidad { get; set; }
     [JsonIgnore]
     public ICollection<DatoSensor> Datos { get; set; } = new List<DatoSensor>();
 }

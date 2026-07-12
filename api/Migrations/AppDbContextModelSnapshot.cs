@@ -297,6 +297,62 @@ namespace api.Migrations
                         });
                 });
 
+            modelBuilder.Entity("api.Models.Usuario", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("CreadoPorId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("DebeCambiarInfo")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Email")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("NombreCompleto")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("PasswordHash")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Rol")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("Telefono")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Username")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreadoPorId");
+
+                    b.HasIndex("Username")
+                        .IsUnique();
+
+                    b.ToTable("Usuarios");
+                });
+
             modelBuilder.Entity("api.Models.Area", b =>
                 {
                     b.HasOne("api.Models.Planta", "Planta")
@@ -346,6 +402,16 @@ namespace api.Migrations
                     b.Navigation("Unidad");
                 });
 
+            modelBuilder.Entity("api.Models.Usuario", b =>
+                {
+                    b.HasOne("api.Models.Usuario", "CreadoPor")
+                        .WithMany("UsuariosCreados")
+                        .HasForeignKey("CreadoPorId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("CreadoPor");
+                });
+
             modelBuilder.Entity("api.Models.Area", b =>
                 {
                     b.Navigation("Sensores");
@@ -369,6 +435,11 @@ namespace api.Migrations
             modelBuilder.Entity("api.Models.Unidad", b =>
                 {
                     b.Navigation("Sensores");
+                });
+
+            modelBuilder.Entity("api.Models.Usuario", b =>
+                {
+                    b.Navigation("UsuariosCreados");
                 });
 #pragma warning restore 612, 618
         }

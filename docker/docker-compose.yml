@@ -14,6 +14,9 @@ services:
       EMQX_HOST: 127.0.0.1
       EMQX_DASHBOARD__DEFAULT_USERNAME: admin
       EMQX_DASHBOARD__DEFAULT_PASSWORD: public
+      EMQX_AUTH__USER__1__USERNAME: ${MQTT_USER:-bridge_user}
+      EMQX_AUTH__USER__1__PASSWORD: ${MQTT_PASS:-changeme}
+      EMQX_ALLOW_ANONYMOUS: "false"
     volumes:
       - emqx_data:/opt/emqx/data
       - emqx_log:/opt/emqx/log

@@ -14,6 +14,9 @@ public class WebSocketRealtimeService
     private readonly ILogger<WebSocketRealtimeService> _logger;
     private readonly string _mqttBroker;
     private readonly int _mqttPort;
+    private readonly bool _mqttUseTls;
+    private readonly string _mqttUser;
+    private readonly string _mqttPass;
     private bool _mqttConnected = false;
 
     public WebSocketRealtimeService(ILogger<WebSocketRealtimeService> logger)
@@ -21,6 +24,9 @@ public class WebSocketRealtimeService
         _logger = logger;
         _mqttBroker = Environment.GetEnvironmentVariable("MQTT_BROKER") ?? "localhost";
         _mqttPort = int.Parse(Environment.GetEnvironmentVariable("MQTT_PORT") ?? "1883");
+        _mqttUseTls = (Environment.GetEnvironmentVariable("MQTT_USE_TLS") ?? "false").Equals("true", StringComparison.OrdinalIgnoreCase);
+        _mqttUser = Environment.GetEnvironmentVariable("MQTT_USER") ?? "";
+        _mqttPass = Environment.GetEnvironmentVariable("MQTT_PASS") ?? "";
     }
 
     public async Task InitializeAsync()
@@ -30,9 +36,16 @@ public class WebSocketRealtimeService
 
         _mqttClient.ApplicationMessageReceivedAsync += OnMqttMessageReceivedAsync;
 
-        var options = new MqttClientOptionsBuilder()
-            .WithTcpServer(_mqttBroker, _mqttPort)
-            .Build();
+        var optionsBuilder = new MqttClientOptionsBuilder()
+            .WithTcpServer(_mqttBroker, _mqttPort);
+
+        if (!string.IsNullOrEmpty(_mqttUser) && !string.IsNullOrEmpty(_mqttPass))
+            optionsBuilder.WithCredentials(_mqttUser, _mqttPass);
+
+        if (_mqttUseTls)
+            optionsBuilder.WithTlsOptions(o => { });
+
+        var options = optionsBuilder.Build();
 
         await _mqttClient.ConnectAsync(options);
         _mqttConnected = true;

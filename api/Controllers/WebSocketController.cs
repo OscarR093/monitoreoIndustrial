@@ -1,4 +1,5 @@
 using System.Net.WebSockets;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using api.Services;
 
@@ -17,6 +18,7 @@ public class WebSocketController : ControllerBase
     }
 
     [Route("/ws/realtime")]
+    [Authorize]
     public async Task Get()
     {
         if (!HttpContext.WebSockets.IsWebSocketRequest)

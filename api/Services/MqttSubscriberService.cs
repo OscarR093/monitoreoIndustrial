@@ -15,6 +15,9 @@ public class MqttSubscriberService : BackgroundService
     private IMqttClient? _mqttClient;
     private readonly string _mqttBroker;
     private readonly int _mqttPort;
+    private readonly bool _mqttUseTls;
+    private readonly string _mqttUser;
+    private readonly string _mqttPass;
 
     public MqttSubscriberService(IServiceProvider serviceProvider, ILogger<MqttSubscriberService> logger)
     {
@@ -22,6 +25,9 @@ public class MqttSubscriberService : BackgroundService
         _logger = logger;
         _mqttBroker = Environment.GetEnvironmentVariable("MQTT_BROKER") ?? "localhost";
         _mqttPort = int.Parse(Environment.GetEnvironmentVariable("MQTT_PORT") ?? "1883");
+        _mqttUseTls = (Environment.GetEnvironmentVariable("MQTT_USE_TLS") ?? "false").Equals("true", StringComparison.OrdinalIgnoreCase);
+        _mqttUser = Environment.GetEnvironmentVariable("MQTT_USER") ?? "";
+        _mqttPass = Environment.GetEnvironmentVariable("MQTT_PASS") ?? "";
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -33,9 +39,16 @@ public class MqttSubscriberService : BackgroundService
 
         _mqttClient.ApplicationMessageReceivedAsync += OnMessageReceivedAsync;
 
-        var options = new MqttClientOptionsBuilder()
-            .WithTcpServer(_mqttBroker, _mqttPort)
-            .Build();
+        var optionsBuilder = new MqttClientOptionsBuilder()
+            .WithTcpServer(_mqttBroker, _mqttPort);
+
+        if (!string.IsNullOrEmpty(_mqttUser) && !string.IsNullOrEmpty(_mqttPass))
+            optionsBuilder.WithCredentials(_mqttUser, _mqttPass);
+
+        if (_mqttUseTls)
+            optionsBuilder.WithTlsOptions(o => { });
+
+        var options = optionsBuilder.Build();
 
         try
         {

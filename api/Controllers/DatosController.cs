@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using api.Data;
@@ -24,6 +25,7 @@ public class SensorDto
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class DatosController : ControllerBase
 {
     private readonly AppDbContext _context;

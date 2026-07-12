@@ -1,11 +1,6 @@
 # Sistema de Monitoreo Industrial - Documentación de Desarrollo
 
-## Fecha: 2026-04-21
-
-## Context7
-
-Always use context7 when I need library/API documentation, code generation, 
-setup or configuration steps without me having to explicitly ask.
+## Fecha: 2026-07-12
 
 ## Arquitectura del Sistema
 
@@ -24,6 +19,13 @@ PLC (real o simulado) → Bridge → MQTT Broker (EMQX) → API (.NET) ↔ WebSo
 5. **WebSocket** detecta cliente desconectado → publica "STOP"
 6. **Frontend** recibe datos realtime via WebSocket y los visualiza
 
+### Autenticación y Seguridad
+
+- **API → Frontend**: JWT httpOnly cookie con 3 roles (SuperAdmin, Admin, Viewer)
+- **MQTT (Bridge + API → EMQX)**: Credenciales user/password vía `MQTT_USER`/`MQTT_PASS`
+- **TLS**: Modo cloud con Traefik + Let's Encrypt (HTTPS/WSS/MQTTS). Modo intranet sin TLS.
+- **CORS**: Cloud restringido al dominio, intranet con `SetIsOriginAllowed(_ => true)`
+
 ---
 
 ## Estructura del Proyecto
@@ -31,310 +33,245 @@ PLC (real o simulado) → Bridge → MQTT Broker (EMQX) → API (.NET) ↔ WebSo
 ```
 monitoreoIndustrial/
 ├── docker/
-│   └── docker-compose.yml    # EMQX + PostgreSQL
-├── api/                       # .NET Core Web API (.NET 10)
+│   └── docker-compose.yml        # EMQX + PostgreSQL
+├── api/                          # .NET 10 Web API
 │   ├── Models/
-│   │   ├── Planta.cs
-│   │   ├── Area.cs
-│   │   ├── TipoGrafico.cs
-│   │   ├── Unidad.cs
-│   │   ├── Sensor.cs
-│   │   └── DatoSensor.cs
+│   │   ├── Planta.cs, Area.cs, TipoGrafico.cs, Unidad.cs
+│   │   ├── Sensor.cs, DatoSensor.cs
+│   │   ├── Usuario.cs            # Auth: roles + perfil
+│   │   └── Dtos.cs               # LoginRequest, RegisterRequest, etc.
 │   ├── Data/
 │   │   └── AppDbContext.cs
 │   ├── Controllers/
-│   │   ├── PlantasController.cs
-│   │   ├── AreasController.cs
-│   │   ├── SensoresController.cs
-│   │   ├── DatosController.cs
-│   │   ├── TiposGraficoController.cs
-│   │   ├── UnidadesController.cs
+│   │   ├── AuthController.cs     # Login, register, complete-profile, users CRUD
+│   │   ├── PlantasController.cs, AreasController.cs
+│   │   ├── SensoresController.cs, DatosController.cs
+│   │   ├── TiposGraficoController.cs, UnidadesController.cs
 │   │   └── WebSocketController.cs
 │   ├── Services/
-│   │   ├── MqttSubscriberService.cs
-│   │   └── WebSocketRealtimeService.cs
+│   │   ├── JwtService.cs         # Generación/validación JWT
+│   │   ├── MqttSubscriberService.cs  # Suscriptor MQTT (history + realtime)
+│   │   └── WebSocketRealtimeService.cs # WebSocket con control START/STOP
+│   ├── Middleware/
+│   │   └── ProfileCompletionMiddleware.cs # Bloquea acceso si DebeCambiarInfo=true
 │   ├── Migrations/
-│   └── api.csproj
-├── bridge/                    # Python bridge
-├── frontend/                  # React frontend (temporal, descartable)
-├── next_steps.md
-└── AGENTS.md
+│   └── Program.cs                # Configuración auth, CORS, seed SuperAdmin
+├── api.Tests/                    # xUnit tests (42 tests, InMemory DB)
+│   ├── CustomWebApplicationFactory.cs
+│   ├── JwtServiceTests.cs
+│   ├── AuthControllerTests.cs
+│   └── AuthorizationTests.cs
+├── bridge/                       # Python bridge
+│   ├── config.py                 # + MQTT_USER, MQTT_PASS, MQTT_USE_TLS
+│   ├── mqtt_client.py            # + TLS + credenciales
+│   ├── control_client.py         # + TLS + credenciales
+│   └── main.py
+├── frontend/                     # React + Vite + Tailwind
+│   ├── src/
+│   │   ├── services/api.js       # fetch wrapper con withCredentials
+│   │   ├── context/AuthContext.jsx
+│   │   ├── components/ProtectedRoute.jsx
+│   │   ├── layouts/PublicLayout.jsx, AuthLayout.jsx
+│   │   └── pages/Login.jsx, CompleteProfile.jsx, Dashboard.jsx, UserManagement.jsx
+│   └── package.json
+├── .env, .env.example
+├── AGENTS.md
+└── openspec/                     # Planeación de cambios
 ```
 
 ---
 
-## Configuración
-
-### Variables de Entorno (.env)
+## Variables de Entorno (.env)
 
 | Variable | Default | Descripción |
-|----------|---------|-------------|
+|---|---|---|
+| **Despliegue** | | |
+| DEPLOYMENT_MODE | intranet | `cloud` o `intranet` |
+| DOMAIN_URL | | Dominio del cliente (solo cloud) |
+| LETSENCRYPT_EMAIL | | Email para Let's Encrypt (solo cloud) |
+| **MQTT** | | |
 | MQTT_BROKER | localhost | Broker MQTT |
-| MQTT_PORT | 1883 | Puerto plain |
+| MQTT_PORT | 1883 | Puerto MQTT |
+| MQTT_USE_TLS | false | Habilitar TLS para MQTT |
+| MQTT_USER | | Usuario MQTT (EMQX auth) |
+| MQTT_PASS | | Contraseña MQTT (EMQX auth) |
+| **JWT** | | |
+| JWT_SECRET | (requerido) | Clave HMAC-SHA256, mínimo 32 caracteres |
+| JWT_EXPIRES_IN | 1h | Expiración del token |
+| **SuperAdmin** | | |
+| SUPER_ADMIN_USERNAME | admin | Usuario inicial |
+| SUPER_ADMIN_PASSWORD | admin123 | Contraseña inicial |
+| **Bridge** | | |
 | PLC_HOST | 192.168.1.100 | IP del PLC |
 | PLC_PORT | 502 | Puerto Modbus TCP |
-| PLC_UNIT_ID | 1 | ID unidad Modbus |
 | PLANTA | p1 | Identificador de planta |
 | AREA | a1 | Identificador de área |
-| HISTORY_INTERVAL | 1200 | Intervalo histórico (1200s = 20 min) |
-| REALTIME_INTERVAL | 2 | Intervalo realtime (2s) |
-| SIMULATION | true | Usar simulación en vez de PLC real |
-
-### Topics MQTT
-
-- **History**: `industrial/{planta}/{area}/history`
-- **Realtime**: `industrial/{planta}/{area}/realtime`
-- **Control**: `industrial/{planta}/{area}/control`
-
-### Comandos de Control
-
-- `START`: Activa publicación realtime desde el bridge
-- `STOP`: Desactiva publicación realtime
-
----
-
-## Módulos del Bridge
-
-### config.py
-Carga variables de entorno.
-
-### sensors.py
-Define los sensores del sistema.
-
-### plc_connection.py
-Conexión al PLC real via pymodbus.
-
-### plc_simulation.py
-Simula datos del PLC para desarrollo.
-
-### mqtt_client.py
-Cliente MQTT con publicación y suscripción.
-
-### threads.py
-Hilos separados para publicación simultánea.
-
-### main.py
-Orquestador principal del bridge.
-
-### control_client.py
-Cliente para enviar comandos START/STOP.
-
-### test_client.py
-Suscriptor de pruebas.
-
----
-
-## Ejecución
-
-### Iniciar EMQX y PostgreSQL
-```bash
-cd docker
-docker compose up -d
-```
-
-### Iniciar API
-```bash
-cd api && dotnet run
-```
-
-### Iniciar Bridge
-```bash
-python bridge/main.py
-```
-
-### Iniciar Frontend (descartable)
-```bash
-cd frontend && npm run dev
-```
-
----
-
-## Formato de Datos
-
-### JSONPublicado en Topics
-
-```json
-[
-    {
-        "sensor": "s1",
-        "valor": 123.45,
-        "timestamp": 1713500000.0
-    },
-    {
-        "sensor": "s2",
-        "valor": 124.67,
-        "timestamp": 1713500000.0
-    }
-]
-```
+| SIMULATION | true | Usar simulación |
+| **Frontend** | | |
+| VITE_API_BASE | http://localhost:5000 | URL base de la API |
 
 ---
 
 ## API (.NET Core 10)
 
 ### Stack
-
 - .NET 10 (Web API)
 - PostgreSQL (Entity Framework Core)
 - MQTTnet 5.x (suscriptor MQTT)
+- JWT Bearer Authentication (httpOnly cookie)
+- BCrypt.Net-Next (hash de contraseñas)
 - System.Net.WebSockets
 
 ### Endpoints REST
 
-| Método | Endpoint | Descripción |
-|--------|----------|-------------|
-| GET | `/api/plantas` | Listar plantas |
-| GET | `/api/areas` | Listar áreas (filtro: planta) |
-| GET | `/api/sensores` | Listar sensores (filtros: planta, area) |
-| POST | `/api/sensores` | Crear sensor |
-| PUT | `/api/sensores/{id}` | Actualizar sensor |
-| DELETE | `/api/sensores/{id}` | Eliminar sensor |
-| GET | `/api/datos` | Datos históricos (filtros: planta, area, limit) |
-| POST | `/api/datos` | Crear dato |
-| GET | `/api/tipos-grafico` | Listar tipos de gráfico |
-| GET | `/api/unidades` | Listar unidades |
+| Método | Endpoint | Auth | Roles | Descripción |
+|---|---|---|---|---|
+| POST | `/api/auth/login` | No | — | Login, devuelve cookie JWT |
+| POST | `/api/auth/logout` | Sí | Todos | Limpiar cookie |
+| POST | `/api/auth/register` | Sí | Admin+ | Crear usuario |
+| PUT | `/api/auth/complete-profile` | Sí | Todos | Completar perfil 1er login |
+| GET | `/api/auth/me` | Sí | Todos | Ver perfil propio |
+| PUT | `/api/auth/me` | Sí | Todos | Editar perfil propio |
+| DELETE | `/api/auth/me` | Sí | Admin, Viewer | Auto-eliminarse |
+| GET | `/api/auth/users` | Sí | Admin+ | Listar usuarios |
+| DELETE | `/api/auth/users/{id}` | Sí | Admin+ | Eliminar usuario |
+| GET | `/api/plantas` | Sí | Todos | Listar plantas |
+| GET | `/api/areas` | Sí | Todos | Listar áreas |
+| GET | `/api/sensores` | Sí | Todos | Listar sensores |
+| POST | `/api/sensores` | Sí | Admin, SA | Crear sensor |
+| PUT | `/api/sensores/{id}` | Sí | Admin, SA | Actualizar sensor |
+| DELETE | `/api/sensores/{id}` | Sí | Admin, SA | Eliminar sensor |
+| GET | `/api/datos` | Sí | Todos | Datos históricos |
+| GET | `/api/tipos-grafico` | Sí | Todos | Tipos de gráfico |
+| GET | `/api/unidades` | Sí | Todos | Unidades |
+
+### Roles
+
+| Acción | SuperAdmin | Admin | Viewer |
+|---|---|---|---|
+| Ver dashboard y datos | ✅ | ✅ | ✅ |
+| CRUD sensores | ✅ | ✅ | ❌ |
+| Crear Admin | ✅ | ❌ | ❌ |
+| Crear/eliminar Viewer | ✅ | ✅ | ❌ |
+| Eliminar Admin | ✅ | ❌ | ❌ |
+| Editar perfil propio | ✅ | ✅ | ✅ |
+| Editar perfil ajeno | ❌ | ❌ | ❌ |
+| Auto-eliminarse | ❌ | ✅ | ✅ |
 
 ### WebSocket
-
 - **Endpoint**: `ws://host:5000/ws/realtime?planta=p1&area=a1`
-- **Control automático**: Al conectar publica START, al desconectar STOP
+- **Auth**: JWT cookie validada antes del upgrade
+- **Control**: START al conectar, STOP al desconectar
 - **Forward**: Datos realtime del bridge al cliente
 
-### Servicios
-
-#### MqttSubscriberService
-- Suscrito a `industrial/+/+/history` y `industrial/+/+/realtime`
-- Guarda datos en PostgreSQL
-- Auto-crea sensores nuevos si no existen
-
-#### WebSocketRealtimeService
-- Mantiene conexiones WebSocket por planta/área
-- Publica START/STOP en topics de control
-- Reenvía datos realtime a clientes conectados
+### Services
+- **JwtService**: Generación/validación de tokens HS256 con claims (userId, username, rol, mustUpdateProfile)
+- **MqttSubscriberService**: BackgroundService, suscrito a `industrial/+/+/history` y `industrial/+/+/realtime`
+- **WebSocketRealtimeService**: Singleton, maneja conexiones WebSocket por planta/área
+- **ProfileCompletionMiddleware**: Bloquea acceso a endpoints si `DebeCambiarInfo=true`
 
 ---
 
-## Base de Datos
+## Frontend (React + Vite + Tailwind)
 
-### Tablas
+### Stack
+- React 19, React Router 7, Tailwind CSS 4, Recharts
+- Vite 8, ESLint
 
-```sql
--- Plantas
-CREATE TABLE plantas (
-    id SERIAL PRIMARY KEY,
-    nombre VARCHAR(100),
-    codigo VARCHAR(20) UNIQUE,
-    created_at TIMESTAMP DEFAULT NOW()
-);
+### Rutas
 
--- Áreas
-CREATE TABLE areas (
-    id SERIAL PRIMARY KEY,
-    planta_id INT REFERENCES plantas(id),
-    nombre VARCHAR(100),
-    codigo VARCHAR(20),
-    created_at TIMESTAMP DEFAULT NOW()
-);
+| Ruta | Layout | Auth | Descripción |
+|---|---|---|---|
+| `/login` | PublicLayout | No | Login |
+| `/complete-profile` | PublicLayout | Sí | Completar perfil 1er login |
+| `/` | AuthLayout | Sí | Dashboard con sensores en tiempo real |
+| `/users` | AuthLayout | Admin+ | Gestión de usuarios |
 
--- Tipos de Gráfico
-CREATE TABLE tipos_graficos (
-    id SERIAL PRIMARY KEY,
-    nombre VARCHAR(50),
-    descripcion VARCHAR(200),
-    widget VARCHAR(50)
-);
+### Componentes
+- `AuthContext`: Estado de autenticación, login/logout, verificación de sesión
+- `ProtectedRoute`: Redirige a login si no autenticado, a complete-profile si mustUpdateProfile
+- `api.js`: Fetch wrapper con `credentials: 'include'`, manejo de 401/403, WebSocket URL builder
 
--- Unidades
-CREATE TABLE unidades (
-    id SERIAL PRIMARY KEY,
-    nombre VARCHAR(50),
-    simbolo VARCHAR(20),
-    descripcion VARCHAR(200)
-);
-
--- Sensores
-CREATE TABLE sensores (
-    id SERIAL PRIMARY KEY,
-    area_id INT REFERENCES areas(id),
-    sensor_id VARCHAR(20),
-    registro INT,
-    nombre VARCHAR(100),
-    tipo_grafico_id INT REFERENCES tipos_graficos(id),
-    unidad_id INT REFERENCES unidades(id),
-    created_at TIMESTAMP DEFAULT NOW()
-);
-
--- Datos de Sensores
-CREATE TABLE datos_sensores (
-    id SERIAL PRIMARY KEY,
-    sensor_id INT REFERENCES sensores(id),
-    valor DECIMAL(10,2),
-    timestamp BIGINT,
-    created_at TIMESTAMP DEFAULT NOW()
-);
-```
-
-### Datos Iniciales
-
-**Plantas:**
-- Planta 1 (codigo: p1)
-
-**Áreas:**
-- Área 1 (codigo: a1) → planta p1
-
-**TipoGráficos:**
-- línea (Time Series) → widget: line
-- gauge (Indicador) → widget: gauge
-- bar (Barras) → widget: bar
-
-**Unidades:**
-- Temperatura (°C), Presión (PSI), Voltaje (V), Corriente (A), Porcentaje (%), RPM
+### Variables de Entorno
+- `VITE_API_BASE`: URL base de la API (default: `http://localhost:5000`)
 
 ---
 
-## Estado del Sistema (2026-04-21)
+## Tests
 
-### Completado
+### xUnit (api.Tests/)
+- 42 tests en 3 suites: JwtService (6), AuthController (24), Authorization (12)
+- Usa `WebApplicationFactory` + InMemory Database (sin Docker ni PostgreSQL)
+- Modo test activado con `INTEGRATION_TEST=true` en Program.cs
+- Ejecutar: `cd api.Tests && dotnet test`
 
-- [x] API .NET Core 10 funcional
-- [x] PostgreSQL con Entity Framework
-- [x] MqttSubscriberService
-- [x] WebSocket con control START/STOP
-- [x] Endpoints REST completos
-- [x] Frontend demo (temporal, descartable)
-
-### Pendiente ( próximos pasos)
-
-- [ ] Mejorar bridge (robustez, manejo de errores, reconexión)
-- [ ] Completar API (validaciones, seguridad)
-- [ ] Construir frontend real de la plataforma
+### Playwright (frontend)
+- 10 tests end-to-end desde login hasta dashboard con datos en tiempo real
+- Headless Chromium, verifica flujos completos de usuario
 
 ---
 
 ## Comandos Útiles
 
 ```bash
+# Iniciar servicios Docker
+cd docker && docker compose up -d
+
+# Iniciar API (con variables de entorno)
+cd api
+export JWT_SECRET="clave-de-al-menos-32-caracteres!!!!!"
+export SUPER_ADMIN_USERNAME=admin SUPER_ADMIN_PASSWORD=admin123
+export MQTT_BROKER=localhost MQTT_PORT=1883 MQTT_USER=bridge_user MQTT_PASS=changeme
+export DEPLOYMENT_MODE=intranet
+dotnet run --urls "http://0.0.0.0:5000"
+
+# Iniciar Frontend
+cd frontend && npm run dev -- --host 0.0.0.0
+
+# Iniciar Bridge (simulación)
+cd bridge && python main.py
+
 # Compilar API
 export PATH="$PATH:/home/oscarr093/.dotnet" && cd api && dotnet build
 
-# Ejecutar API
-export PATH="$PATH:/home/oscarr093/.dotnet" && cd api && dotnet run
+# Ejecutar tests xUnit
+cd api.Tests && dotnet test
 
-# Ver logs de la API
-tail -f /tmp/api.log
+# Ejecutar tests Playwright
+cd /tmp && node frontend-test.js
 
-# Ver logs del bridge
-tail -f /tmp/bridge.log
-
-# Crear migración
-export PATH="$PATH:/home/oscarr093/.dotnet:/home/oscarr093/.dotnet/tools" && cd api && dotnet ef migrations add Nombre
+# Crear migración EF
+export PATH="$PATH:/home/oscarr093/.dotnet:/home/oscarr093/.dotnet/tools"
+cd api && dotnet ef migrations add NombreMigracion
 
 # Aplicar migración
-export PATH="$PATH:/home/oscarr093/.dotnet:/home/oscarr093/.dotnet/tools" && cd api && dotnet ef database update
+cd api && dotnet ef database update
 ```
+
+---
+
+## Estado del Sistema (2026-07-12)
+
+### Completado
+- [x] API .NET 10 con REST + WebSocket
+- [x] PostgreSQL con Entity Framework
+- [x] MqttSubscriberService + WebSocketRealtimeService
+- [x] Autenticación JWT httpOnly cookie con 3 roles
+- [x] Gestión de usuarios con jerarquía de roles
+- [x] Flujo de primer inicio de sesión (completar perfil)
+- [x] MQTT con credenciales y TLS opcional (bridge + API)
+- [x] Frontend React con Tailwind (login, dashboard, gestión usuarios)
+- [x] xUnit tests (42 tests, InMemory DB)
+- [x] Playwright E2E tests (10 tests)
+
+### Pendiente
+- [ ] Docker Compose cloud con Traefik + Let's Encrypt
+- [ ] Dockerfiles para API y Frontend
+- [ ] Verificación integral con despliegue Docker
+- [ ] EMQX: bloquear conexiones anónimas en cloud (requiere dashboard o config file)
 
 ---
 
 ## Autores
 
-Sistema Monitoreo Industrial - 2026-04-21
+Sistema Monitoreo Industrial - 2026-07-12

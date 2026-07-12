@@ -1,18 +1,26 @@
 import json
+import ssl
 import paho.mqtt.client as mqtt
 from config import get_topics
 
 
 class MQTTClient:
-    def __init__(self, broker, port, topics_callback=None):
+    def __init__(self, broker, port, use_tls=False, username="", password="", topics_callback=None):
         self.broker = broker
         self.port = port
+        self.use_tls = use_tls
         self.client = mqtt.Client()
         self.topics_callback = topics_callback
         self.conectado = False
         self.topics_to_subscribe = []
         self.client.on_connect = self._on_connect
         self.client.on_message = self._on_message
+
+        if username and password:
+            self.client.username_pw_set(username, password)
+
+        if use_tls:
+            self.client.tls_set(cert_reqs=ssl.CERT_REQUIRED, tls_version=ssl.PROTOCOL_TLS)
 
     def conectar(self):
         try:
@@ -78,5 +86,8 @@ def obtener_mqtt(config, topics_callback=None):
     return MQTTClient(
         broker=config["mqtt_broker"],
         port=config["mqtt_port"],
+        use_tls=config.get("mqtt_use_tls", False),
+        username=config.get("mqtt_user", ""),
+        password=config.get("mqtt_pass", ""),
         topics_callback=topics_callback,
     )

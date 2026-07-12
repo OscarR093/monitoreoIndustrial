@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using api.Data;
@@ -17,6 +18,7 @@ public class SensoresController : ControllerBase
     }
 
     [HttpGet]
+    [Authorize]
     public async Task<ActionResult<IEnumerable<Sensor>>> GetSensores(
         [FromQuery] string? planta,
         [FromQuery] string? area)
@@ -37,6 +39,7 @@ public class SensoresController : ControllerBase
     }
 
     [HttpGet("{id}")]
+    [Authorize]
     public async Task<ActionResult<Sensor>> GetSensor(int id)
     {
         var sensor = await _context.Sensores
@@ -52,6 +55,7 @@ public class SensoresController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Policy = "AdminOrSuperAdmin")]
     public async Task<ActionResult<Sensor>> CreateSensor(Sensor sensor)
     {
         _context.Sensores.Add(sensor);
@@ -60,6 +64,7 @@ public class SensoresController : ControllerBase
     }
 
     [HttpPut("{id}")]
+    [Authorize(Policy = "AdminOrSuperAdmin")]
     public async Task<IActionResult> UpdateSensor(int id, Sensor sensor)
     {
         if (id != sensor.Id)
@@ -70,6 +75,7 @@ public class SensoresController : ControllerBase
     }
 
     [HttpDelete("{id}")]
+    [Authorize(Policy = "AdminOrSuperAdmin")]
     public async Task<IActionResult> DeleteSensor(int id)
     {
         var sensor = await _context.Sensores.FindAsync(id);
