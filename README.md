@@ -25,14 +25,9 @@ PLC (real o simulado) → Bridge → MQTT Broker (EMQX) → API (.NET) ↔ WebSo
 cd docker && docker compose up -d
 
 # 2. API
-cd api
-export JWT_SECRET="clave-de-al-menos-32-caracteres!!!!!"
-export SUPER_ADMIN_USERNAME=admin SUPER_ADMIN_PASSWORD=admin123
-export MQTT_BROKER=localhost MQTT_PORT=1883 MQTT_USER=bridge_user MQTT_PASS=changeme
-export DEPLOYMENT_MODE=intranet
-dotnet run --urls "http://0.0.0.0:5000"
+cd api && dotnet run --urls "http://0.0.0.0:5000"
 
-# 3. Bridge (terminal aparte)
+# 3. Bridge (terminal aparte, opcional)
 cd bridge && python main.py
 
 # 4. Frontend (terminal aparte)

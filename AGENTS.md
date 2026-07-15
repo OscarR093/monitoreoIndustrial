@@ -120,6 +120,7 @@ monitoreoIndustrial/
 - MQTTnet 5.x (suscriptor MQTT)
 - JWT Bearer Authentication (httpOnly cookie)
 - BCrypt.Net-Next (hash de contraseñas)
+- DotNetEnv (carga de .env)
 - System.Net.WebSockets
 
 ### Endpoints REST
@@ -217,13 +218,8 @@ monitoreoIndustrial/
 # Iniciar servicios Docker
 cd docker && docker compose up -d
 
-# Iniciar API (con variables de entorno)
-cd api
-export JWT_SECRET="clave-de-al-menos-32-caracteres!!!!!"
-export SUPER_ADMIN_USERNAME=admin SUPER_ADMIN_PASSWORD=admin123
-export MQTT_BROKER=localhost MQTT_PORT=1883 MQTT_USER=bridge_user MQTT_PASS=changeme
-export DEPLOYMENT_MODE=intranet
-dotnet run --urls "http://0.0.0.0:5000"
+# Iniciar API (las variables se leen del .env automáticamente con DotNetEnv)
+cd api && dotnet run --urls "http://0.0.0.0:5000"
 
 # Iniciar Frontend
 cd frontend && npm run dev -- --host 0.0.0.0

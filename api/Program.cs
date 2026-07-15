@@ -1,4 +1,5 @@
 using System.Text;
+using DotNetEnv;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -6,6 +7,8 @@ using api.Data;
 using api.Middleware;
 using api.Models;
 using api.Services;
+
+Env.Load("../.env");
 
 var builder = WebApplication.CreateBuilder(args);
 
