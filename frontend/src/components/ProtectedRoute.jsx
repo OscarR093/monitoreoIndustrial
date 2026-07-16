@@ -6,8 +6,8 @@ export function ProtectedRoute({ children, roles }) {
 
   if (loading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-slate-900">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-sky-400 border-t-transparent" />
+      <div className="flex h-screen items-center justify-center bg-cyber-black">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-cyan-tech border-t-transparent" />
       </div>
     );
   }

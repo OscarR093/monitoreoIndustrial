@@ -10,10 +10,10 @@ import UserManagement from './pages/UserManagement';
 
 function NotFound() {
   return (
-    <div className="flex h-full items-center justify-center">
+    <div className="flex h-full items-center justify-center bg-cyber-black">
       <div className="text-center">
-        <h1 className="font-mono text-4xl font-bold text-slate-400">404</h1>
-        <p className="mt-2 text-slate-500">Página no encontrada</p>
+        <h1 className="font-mono text-4xl font-bold text-text-muted">404</h1>
+        <p className="mt-2 text-text-muted">Página no encontrada</p>
       </div>
     </div>
   );

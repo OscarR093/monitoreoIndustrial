@@ -27,47 +27,44 @@ export default function CompleteProfile() {
   };
 
   return (
-    <div className="rounded-xl bg-slate-800 p-8 shadow-2xl border border-slate-700">
+    <div className="rounded-xl bg-panel p-8 shadow-2xl border border-gridline">
       <div className="mb-8 text-center">
-        <h1 className="font-mono text-2xl font-bold text-sky-400">Completar Perfil</h1>
-        <p className="mt-2 text-sm text-slate-400">Debe actualizar su información antes de continuar</p>
+        <h1 className="font-mono text-2xl font-bold text-cyan-tech">Completar Perfil</h1>
+        <p className="mt-2 text-sm text-text-muted">Debe actualizar su información antes de continuar</p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-slate-300 mb-1">Nombre Completo</label>
+          <label className="block text-sm font-medium text-text-muted mb-1">Nombre Completo</label>
           <input type="text" value={nombre} onChange={(e) => setNombre(e.target.value)}
-            className="w-full rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white placeholder-slate-500 focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
+            className="w-full rounded-lg border border-gridline bg-cyber-black px-3 py-2 text-sm text-white placeholder-text-muted focus:border-cyan-tech focus:outline-none focus:ring-1 focus:ring-cyan-tech"
             placeholder="Juan Pérez" required />
         </div>
-
         <div>
-          <label className="block text-sm font-medium text-slate-300 mb-1">Email</label>
+          <label className="block text-sm font-medium text-text-muted mb-1">Email</label>
           <input type="email" value={email} onChange={(e) => setEmail(e.target.value)}
-            className="w-full rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white placeholder-slate-500 focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
+            className="w-full rounded-lg border border-gridline bg-cyber-black px-3 py-2 text-sm text-white placeholder-text-muted focus:border-cyan-tech focus:outline-none focus:ring-1 focus:ring-cyan-tech"
             placeholder="juan@empresa.com" required />
         </div>
-
         <div>
-          <label className="block text-sm font-medium text-slate-300 mb-1">Teléfono</label>
+          <label className="block text-sm font-medium text-text-muted mb-1">Teléfono</label>
           <input type="tel" value={telefono} onChange={(e) => setTelefono(e.target.value)}
-            className="w-full rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white placeholder-slate-500 focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
+            className="w-full rounded-lg border border-gridline bg-cyber-black px-3 py-2 text-sm text-white placeholder-text-muted focus:border-cyan-tech focus:outline-none focus:ring-1 focus:ring-cyan-tech"
             placeholder="+57 300 123 4567" required />
         </div>
-
         <div>
-          <label className="block text-sm font-medium text-slate-300 mb-1">Nueva Contraseña</label>
+          <label className="block text-sm font-medium text-text-muted mb-1">Nueva Contraseña</label>
           <input type="password" value={nuevaPassword} onChange={(e) => setNuevaPassword(e.target.value)}
-            className="w-full rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white placeholder-slate-500 focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
+            className="w-full rounded-lg border border-gridline bg-cyber-black px-3 py-2 text-sm text-white placeholder-text-muted focus:border-cyan-tech focus:outline-none focus:ring-1 focus:ring-cyan-tech"
             placeholder="Mínimo 4 caracteres" required minLength={4} />
         </div>
 
         {error && (
-          <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-400">{error}</div>
+          <div className="rounded-lg border border-industrial-red/30 bg-industrial-red/10 px-3 py-2 text-sm text-industrial-red">{error}</div>
         )}
 
         <button type="submit" disabled={loading}
-          className="w-full rounded-lg bg-sky-600 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-500 disabled:opacity-50 transition-colors">
+          className="w-full rounded-lg bg-cyan-tech/20 px-4 py-2 text-sm font-semibold text-cyan-tech hover:bg-cyan-tech/30 disabled:opacity-50 transition-colors border border-cyan-tech/30">
           {loading ? 'Guardando...' : 'Completar y Continuar'}
         </button>
       </form>

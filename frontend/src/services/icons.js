@@ -1,0 +1,39 @@
+import {
+  LayoutDashboard, Users, UserCircle, LogOut,
+  Plug, WifiOff, AlertTriangle, AlertCircle,
+  Gauge, Thermometer, Zap, Activity,
+  Settings, ChevronDown, ChevronRight,
+  ChevronLeft, ChevronRight as ChevronRightIcon,
+  PanelLeft, Menu,
+  Expand, Shrink, RotateCw,
+} from 'lucide-react';
+
+export const icons = {
+  dashboard: LayoutDashboard,
+  users: Users,
+  profile: UserCircle,
+  logout: LogOut,
+  connected: Plug,
+  disconnected: WifiOff,
+  reconnecting: RotateCw,
+  alert: AlertTriangle,
+  critical: AlertCircle,
+  gauge: Gauge,
+  temperature: Thermometer,
+  voltage: Zap,
+  activity: Activity,
+  settings: Settings,
+  chevronDown: ChevronDown,
+  chevronRight: ChevronRight,
+  chevronLeft: ChevronLeft,
+  sidebar: PanelLeft,
+  menu: Menu,
+  expand: Expand,
+  shrink: Shrink,
+};
+
+export const iconSize = {
+  nav: 20,
+  inline: 16,
+  header: 24,
+};

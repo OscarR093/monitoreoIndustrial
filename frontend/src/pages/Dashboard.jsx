@@ -1,23 +1,8 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { api, getWsUrl } from '../services/api';
-
-const STATUS_COLORS = { normal: 'border-emerald-500', warning: 'border-amber-500', critical: 'border-red-500' };
-
-function SensorCard({ sensor, valor }) {
-  const status = valor == null ? 'normal' : valor > 80 ? 'critical' : valor > 60 ? 'warning' : 'normal';
-
-  return (
-    <div className={`rounded-lg border-l-4 ${STATUS_COLORS[status]} bg-slate-800 p-4 shadow-lg transition-shadow hover:shadow-xl`}>
-      <p className="font-mono text-xs text-slate-400">{sensor.sensorId}</p>
-      <p className="mt-1 text-lg font-mono font-bold text-white">
-        {valor != null ? valor.toFixed(1) : '--'}
-        <span className="ml-1 text-xs text-slate-400">{sensor.unidad?.simbolo || ''}</span>
-      </p>
-      <p className="mt-1 truncate text-xs text-slate-500">{sensor.nombre}</p>
-      <div className={`mt-2 h-1 rounded-full ${status === 'critical' ? 'bg-red-500 animate-pulse' : status === 'warning' ? 'bg-amber-500' : 'bg-emerald-500'}`} />
-    </div>
-  );
-}
+import { groupSensorsByZone } from '../services/sensorZones';
+import NavigationBar from '../components/NavigationBar';
+import SensorZone from '../components/SensorZone';
 
 export default function Dashboard() {
   const [plantas, setPlantas] = useState([]);
@@ -26,23 +11,49 @@ export default function Dashboard() {
   const [selectedPlanta, setSelectedPlanta] = useState('');
   const [selectedArea, setSelectedArea] = useState('');
   const [realtimeData, setRealtimeData] = useState({});
+  const [wsStatus, setWsStatus] = useState('disconnected');
+  const [lastUpdate, setLastUpdate] = useState(null);
   const wsRef = useRef(null);
   const reconnectRef = useRef(null);
+  const reconnectCount = useRef(0);
+  const [expandAll, setExpandAll] = useState(false);
+  const [collapseAll, setCollapseAll] = useState(false);
 
   useEffect(() => { api.get('/api/plantas').then(setPlantas).catch(() => {}); }, []);
+
   useEffect(() => {
-    if (!selectedPlanta) return;
+    if (!selectedPlanta) { setAreas([]); return; }
     api.get(`/api/areas?planta=${selectedPlanta}`).then(setAreas).catch(() => {});
-  }, [selectedPlanta, setAreas]);
+  }, [selectedPlanta]);
+
   useEffect(() => {
-    if (!selectedPlanta || !selectedArea) return;
+    if (!selectedPlanta || !selectedArea) { setSensores([]); return; }
     api.get(`/api/sensores?planta=${selectedPlanta}&area=${selectedArea}`).then(setSensores).catch(() => {});
-  }, [selectedPlanta, selectedArea, setSensores]);
+  }, [selectedPlanta, selectedArea]);
+
+  const handlePlantaChange = useCallback((p) => {
+    setSelectedPlanta(p);
+    setSelectedArea('');
+    setSensores([]);
+    setRealtimeData({});
+  }, []);
+
+  const handleAreaChange = useCallback((a) => {
+    setSelectedArea(a);
+    setSensores([]);
+    setRealtimeData({});
+  }, []);
 
   const connectWs = useCallback(() => {
     if (!selectedPlanta || !selectedArea) return;
+    setWsStatus('reconnecting');
     const url = getWsUrl(selectedPlanta, selectedArea);
     const ws = new WebSocket(url);
+
+    ws.onopen = () => {
+      setWsStatus('connected');
+      reconnectCount.current = 0;
+    };
 
     ws.onmessage = (e) => {
       try {
@@ -50,11 +61,16 @@ export default function Dashboard() {
         const update = {};
         datos.forEach((d) => { update[d.sensor] = d.valor; });
         setRealtimeData((prev) => ({ ...prev, ...update }));
+        setLastUpdate(new Date());
       } catch {}
     };
 
     ws.onclose = () => {
-      reconnectRef.current = setTimeout(connectWs, 3000);
+      setWsStatus('disconnected');
+      reconnectCount.current++;
+      if (reconnectCount.current < 10) {
+        reconnectRef.current = setTimeout(connectWs, 3000);
+      }
     };
 
     wsRef.current = ws;
@@ -63,53 +79,78 @@ export default function Dashboard() {
   useEffect(() => {
     if (wsRef.current) wsRef.current.close();
     if (reconnectRef.current) clearTimeout(reconnectRef.current);
-    connectWs();
-    return () => { if (wsRef.current) wsRef.current.close(); if (reconnectRef.current) clearTimeout(reconnectRef.current); };
+    reconnectCount.current = 0;
+    setWsStatus('disconnected');
+    setLastUpdate(null);
+    if (selectedPlanta && selectedArea) connectWs();
+    return () => {
+      if (wsRef.current) wsRef.current.close();
+      if (reconnectRef.current) clearTimeout(reconnectRef.current);
+    };
   }, [connectWs]);
+
+  const zones = useMemo(() => groupSensorsByZone(sensores), [sensores]);
+
+  const alertCount = useMemo(() => {
+    let count = 0;
+    for (const s of sensores) {
+      const v = realtimeData[s.sensorId];
+      if (v != null && (v > 60)) count++;
+    }
+    return count;
+  }, [sensores, realtimeData]);
+
+  const zoneStorageKey = `${selectedPlanta}/${selectedArea}/zones`;
 
   if (!plantas.length) {
     return (
-      <div className="flex h-full items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-sky-400 border-t-transparent" />
+      <div className="flex h-full items-center justify-center bg-cyber-black">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-cyan-tech border-t-transparent" />
       </div>
     );
   }
 
   return (
-    <div className="p-6">
-      <h1 className="font-mono text-xl font-bold text-white">Dashboard</h1>
+    <div className="flex flex-col h-full bg-cyber-black">
+      <NavigationBar
+        plantas={plantas}
+        areas={areas}
+        selectedPlanta={selectedPlanta}
+        selectedArea={selectedArea}
+        onPlantaChange={handlePlantaChange}
+        onAreaChange={handleAreaChange}
+        wsStatus={wsStatus}
+        alertCount={alertCount}
+        lastUpdate={lastUpdate}
+        onExpandAll={() => setExpandAll((v) => !v)}
+        onCollapseAll={() => setCollapseAll((v) => !v)}
+      />
 
-      <div className="mt-4 flex gap-3">
-        <select value={selectedPlanta} onChange={(e) => { setSelectedPlanta(e.target.value); setSelectedArea(''); setSensores([]); }}
-          className="rounded-lg border border-slate-600 bg-slate-800 px-3 py-2 text-sm text-white focus:border-sky-500 focus:outline-none">
-          <option value="">Seleccionar planta</option>
-          {plantas.map((p) => <option key={p.id} value={p.codigo}>{p.nombre}</option>)}
-        </select>
-
-        {selectedPlanta && (
-          <select value={selectedArea} onChange={(e) => { setSelectedArea(e.target.value); setSensores([]); }}
-            className="rounded-lg border border-slate-600 bg-slate-800 px-3 py-2 text-sm text-white focus:border-sky-500 focus:outline-none">
-            <option value="">Seleccionar área</option>
-            {areas.map((a) => <option key={a.id} value={a.codigo}>{a.nombre}</option>)}
-          </select>
+      <div className="flex-1 overflow-auto p-4">
+        {!selectedArea && (
+          <div className="flex h-full items-center justify-center">
+            <p className="text-sm text-text-muted">Seleccione una planta y un área para ver los sensores</p>
+          </div>
         )}
+
+        {selectedArea && sensores.length === 0 && (
+          <div className="flex h-full items-center justify-center">
+            <p className="text-sm text-text-muted">No hay sensores configurados en esta área</p>
+          </div>
+        )}
+
+        {Object.entries(zones).map(([name, zoneSensors]) => (
+          <SensorZone
+            key={name}
+            name={name}
+            sensores={zoneSensors}
+            realtimeData={realtimeData}
+            storageKey={`${zoneStorageKey}/${name}`}
+            forceExpand={expandAll}
+            forceCollapse={collapseAll}
+          />
+        ))}
       </div>
-
-      {!selectedArea && (
-        <p className="mt-8 text-center text-sm text-slate-500">Seleccione una planta y un área para ver los sensores</p>
-      )}
-
-      {selectedArea && sensores.length === 0 && (
-        <p className="mt-8 text-center text-sm text-slate-500">No hay sensores configurados en esta área</p>
-      )}
-
-      {sensores.length > 0 && (
-        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {sensores.map((s) => (
-            <SensorCard key={s.id} sensor={s} valor={realtimeData[s.sensorId]} />
-          ))}
-        </div>
-      )}
     </div>
   );
 }
