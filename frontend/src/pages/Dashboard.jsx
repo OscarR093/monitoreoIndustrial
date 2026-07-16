@@ -16,8 +16,8 @@ export default function Dashboard() {
   const wsRef = useRef(null);
   const reconnectRef = useRef(null);
   const reconnectCount = useRef(0);
-  const [expandAll, setExpandAll] = useState(false);
-  const [collapseAll, setCollapseAll] = useState(false);
+  const [expandAll, setExpandAll] = useState(0);
+  const [collapseAll, setCollapseAll] = useState(0);
 
   useEffect(() => { api.get('/api/plantas').then(setPlantas).catch(() => {}); }, []);
 
@@ -122,8 +122,8 @@ export default function Dashboard() {
         wsStatus={wsStatus}
         alertCount={alertCount}
         lastUpdate={lastUpdate}
-        onExpandAll={() => setExpandAll((v) => !v)}
-        onCollapseAll={() => setCollapseAll((v) => !v)}
+        onExpandAll={() => setExpandAll((v) => v + 1)}
+        onCollapseAll={() => setCollapseAll((v) => v + 1)}
       />
 
       <div className="flex-1 overflow-auto p-4">

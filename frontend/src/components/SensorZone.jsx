@@ -5,35 +5,57 @@ import { icons, iconSize } from '../services/icons';
 const ChevronDownIcon = icons.chevronDown;
 const ChevronRightIcon = icons.chevronRight;
 
-export default function SensorZone({ name, sensores, realtimeData, storageKey }) {
+const ZONE_ICONS = {
+  'Temperaturas': icons.temperature,
+  'Presiones': icons.gauge,
+  'Eléctricos': icons.voltage,
+  'Motores': icons.activity,
+  'General': icons.settings,
+};
+
+export default function SensorZone({ name, sensores, realtimeData, storageKey, forceExpand, forceCollapse }) {
   const [collapsed, setCollapsed] = useState(() => {
-    try {
-      return localStorage.getItem(storageKey) === 'true';
-    } catch { return false; }
+    try { return localStorage.getItem(storageKey) === 'true'; }
+    catch { return false; }
   });
 
   useEffect(() => {
-    try {
-      localStorage.setItem(storageKey, collapsed);
-    } catch {}
+    if (forceExpand > 0) setCollapsed(false);
+  }, [forceExpand]);
+
+  useEffect(() => {
+    if (forceCollapse > 0) setCollapsed(true);
+  }, [forceCollapse]);
+
+  useEffect(() => {
+    try { localStorage.setItem(storageKey, String(collapsed)); }
+    catch {}
   }, [collapsed, storageKey]);
 
+  const activeCount = sensores.filter((s) => realtimeData[s.sensorId] != null).length;
+  const ZoneIcon = ZONE_ICONS[name] || ZONE_ICONS['General'];
+
   return (
-    <div className="mb-4">
+    <div className="mb-5">
       <button
         onClick={() => setCollapsed(!collapsed)}
-        className="flex items-center gap-2 w-full rounded px-3 py-2 text-sm font-medium text-text-muted hover:bg-panel hover:text-white transition-colors"
+        className="flex items-center gap-3 w-full rounded-t-lg border border-gridline bg-panel px-4 py-2.5 hover:border-cyan-tech/30 transition-colors group"
       >
-        {collapsed ? <ChevronRightIcon size={iconSize.inline} /> : <ChevronDownIcon size={iconSize.inline} />}
-        <span>{name}</span>
-        <span className="text-xs text-text-muted ml-auto">{sensores.length}</span>
+        <ZoneIcon size={16} className="text-cyan-tech/70 group-hover:text-cyan-tech transition-colors" />
+        <span className="text-sm font-semibold text-white uppercase tracking-wider">{name}</span>
+        <span className="text-[10px] text-text-muted ml-auto font-mono">
+          {activeCount}/{sensores.length} activos
+        </span>
+        {collapsed ? <ChevronRightIcon size={14} className="text-text-muted" /> : <ChevronDownIcon size={14} className="text-text-muted" />}
       </button>
 
       {!collapsed && (
-        <div className="mt-2 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {sensores.map((s) => (
-            <SensorCard key={s.id} sensor={s} valor={realtimeData[s.sensorId]} />
-          ))}
+        <div className="border-l border-r border-b border-gridline rounded-b-lg bg-cyber-black/30 p-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {sensores.map((s) => (
+              <SensorCard key={s.id} sensor={s} valor={realtimeData[s.sensorId]} />
+            ))}
+          </div>
         </div>
       )}
     </div>
