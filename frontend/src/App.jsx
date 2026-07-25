@@ -7,6 +7,7 @@ import Login from './pages/Login';
 import CompleteProfile from './pages/CompleteProfile';
 import Dashboard from './pages/Dashboard';
 import UserManagement from './pages/UserManagement';
+import Settings from './pages/Settings';
 
 function NotFound() {
   return (
@@ -38,6 +39,7 @@ export default function App() {
             <Route path="/users" element={
               <ProtectedRoute roles={['superadmin', 'admin']}><UserManagement /></ProtectedRoute>
             } />
+            <Route path="/settings" element={<Settings />} />
           </Route>
 
           <Route path="*" element={<NotFound />} />

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { api, getWsUrl } from '../services/api';
 import { groupSensorsByZone } from '../services/sensorZones';
 import NavigationBar from '../components/NavigationBar';
+import LocationSelector from '../components/LocationSelector';
 import SensorZone from '../components/SensorZone';
 
 export default function Dashboard() {
@@ -19,11 +20,27 @@ export default function Dashboard() {
   const [expandAll, setExpandAll] = useState(0);
   const [collapseAll, setCollapseAll] = useState(0);
 
-  useEffect(() => { api.get('/api/plantas').then(setPlantas).catch(() => {}); }, []);
+  useEffect(() => {
+    api.get('/api/plantas')
+      .then((data) => {
+        setPlantas(data);
+        if (data.length > 0 && !selectedPlanta) {
+          setSelectedPlanta(data[0].codigo);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (!selectedPlanta) { setAreas([]); return; }
-    api.get(`/api/areas?planta=${selectedPlanta}`).then(setAreas).catch(() => {});
+    api.get(`/api/areas?planta=${selectedPlanta}`)
+      .then((data) => {
+        setAreas(data);
+        if (data.length > 0 && !selectedArea) {
+          setSelectedArea(data[0].codigo);
+        }
+      })
+      .catch(() => {});
   }, [selectedPlanta]);
 
   useEffect(() => {
@@ -113,17 +130,20 @@ export default function Dashboard() {
   return (
     <div className="flex flex-col h-full bg-cyber-black">
       <NavigationBar
+        wsStatus={wsStatus}
+        alertCount={alertCount}
+        lastUpdate={lastUpdate}
+        onExpandAll={() => setExpandAll((v) => v + 1)}
+        onCollapseAll={() => setCollapseAll((v) => v + 1)}
+      />
+
+      <LocationSelector
         plantas={plantas}
         areas={areas}
         selectedPlanta={selectedPlanta}
         selectedArea={selectedArea}
         onPlantaChange={handlePlantaChange}
         onAreaChange={handleAreaChange}
-        wsStatus={wsStatus}
-        alertCount={alertCount}
-        lastUpdate={lastUpdate}
-        onExpandAll={() => setExpandAll((v) => v + 1)}
-        onCollapseAll={() => setCollapseAll((v) => v + 1)}
       />
 
       <div className="flex-1 overflow-auto p-4">

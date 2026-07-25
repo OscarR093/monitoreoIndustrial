@@ -65,11 +65,18 @@ public class SensoresController : ControllerBase
 
     [HttpPut("{id}")]
     [Authorize(Policy = "AdminOrSuperAdmin")]
-    public async Task<IActionResult> UpdateSensor(int id, Sensor sensor)
+    public async Task<IActionResult> UpdateSensor(int id, Sensor update)
     {
-        if (id != sensor.Id)
-            return BadRequest();
-        _context.Entry(sensor).State = EntityState.Modified;
+        var sensor = await _context.Sensores.FindAsync(id);
+        if (sensor == null)
+            return NotFound();
+
+        if (!string.IsNullOrWhiteSpace(update.Alias))
+            sensor.Alias = update.Alias;
+        else if (update.Alias != null)
+            sensor.Alias = null;
+
+        // Se ignoran intentos de cambiar identificadores técnicos o claves foráneas
         await _context.SaveChangesAsync();
         return NoContent();
     }

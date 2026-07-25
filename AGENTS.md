@@ -37,7 +37,7 @@ monitoreoIndustrial/
 ├── api/                          # .NET 10 Web API
 │   ├── Models/
 │   │   ├── Planta.cs, Area.cs, TipoGrafico.cs, Unidad.cs
-│   │   ├── Sensor.cs, DatoSensor.cs
+│   │   ├── Sensor.cs, DatoSensor.cs  # Sensor/Area tienen Alias editable
 │   │   ├── Usuario.cs            # Auth: roles + perfil
 │   │   └── Dtos.cs               # LoginRequest, RegisterRequest, etc.
 │   ├── Data/
@@ -137,10 +137,11 @@ monitoreoIndustrial/
 | GET | `/api/auth/users` | Sí | Admin+ | Listar usuarios |
 | DELETE | `/api/auth/users/{id}` | Sí | Admin+ | Eliminar usuario |
 | GET | `/api/plantas` | Sí | Todos | Listar plantas |
-| GET | `/api/areas` | Sí | Todos | Listar áreas |
-| GET | `/api/sensores` | Sí | Todos | Listar sensores |
+| GET | `/api/areas` | Sí | Todos | Listar áreas (con alias) |
+| PUT | `/api/areas/{id}` | Sí | Admin, SA | Actualizar alias del área |
+| GET | `/api/sensores` | Sí | Todos | Listar sensores (con alias) |
 | POST | `/api/sensores` | Sí | Admin, SA | Crear sensor |
-| PUT | `/api/sensores/{id}` | Sí | Admin, SA | Actualizar sensor |
+| PUT | `/api/sensores/{id}` | Sí | Admin, SA | Actualizar alias del sensor |
 | DELETE | `/api/sensores/{id}` | Sí | Admin, SA | Eliminar sensor |
 | GET | `/api/datos` | Sí | Todos | Datos históricos |
 | GET | `/api/tipos-grafico` | Sí | Todos | Tipos de gráfico |
@@ -152,6 +153,7 @@ monitoreoIndustrial/
 |---|---|---|---|
 | Ver dashboard y datos | ✅ | ✅ | ✅ |
 | CRUD sensores | ✅ | ✅ | ❌ |
+| Editar alias de sensor/área | ✅ | ✅ | ❌ |
 | Crear Admin | ✅ | ❌ | ❌ |
 | Crear/eliminar Viewer | ✅ | ✅ | ❌ |
 | Eliminar Admin | ✅ | ❌ | ❌ |
@@ -185,13 +187,19 @@ monitoreoIndustrial/
 |---|---|---|---|
 | `/login` | PublicLayout | No | Login |
 | `/complete-profile` | PublicLayout | Sí | Completar perfil 1er login |
-| `/` | AuthLayout | Sí | Dashboard con sensores en tiempo real |
+| `/` | AuthLayout | Sí | Dashboard con sensores en tiempo real, selector de ubicación y zonas |
 | `/users` | AuthLayout | Admin+ | Gestión de usuarios |
+| `/settings` | AuthLayout | Sí | Configuración del sistema (placeholder) |
 
 ### Componentes
 - `AuthContext`: Estado de autenticación, login/logout, verificación de sesión
 - `ProtectedRoute`: Redirige a login si no autenticado, a complete-profile si mustUpdateProfile
 - `api.js`: Fetch wrapper con `credentials: 'include'`, manejo de 401/403, WebSocket URL builder
+- `displayNames.js`: Helpers `getSensorDisplayName`, `getAreaDisplayName` (alias || identificador técnico)
+- `NavigationBar`: Barra superior con estado WebSocket, alertas, timestamp
+- `LocationSelector`: Panel de selección planta/área con edición de alias de área (Admin+)
+- `SensorCard`: Tarjeta con gráfico, estado, alias editable (Admin+) y modal de detalle
+- `SensorZone`: Zona colapsable con grid de sensores
 
 ### Variables de Entorno
 - `VITE_API_BASE`: URL base de la API (default: `http://localhost:5000`)
@@ -201,13 +209,13 @@ monitoreoIndustrial/
 ## Tests
 
 ### xUnit (api.Tests/)
-- 42 tests en 3 suites: JwtService (6), AuthController (24), Authorization (12)
+- 47 tests en 4 suites: JwtService (6), AuthController (24), Authorization (12), SensorAreaAlias (5)
 - Usa `WebApplicationFactory` + InMemory Database (sin Docker ni PostgreSQL)
 - Modo test activado con `INTEGRATION_TEST=true` en Program.cs
 - Ejecutar: `cd api.Tests && dotnet test`
 
 ### Playwright (frontend)
-- 10 tests end-to-end desde login hasta dashboard con datos en tiempo real
+- 20 tests end-to-end desde login hasta dashboard, alias y datos en tiempo real
 - Headless Chromium, verifica flujos completos de usuario
 
 ---

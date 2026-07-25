@@ -19,11 +19,17 @@ public class AreasController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<Area>>> GetAreas([FromQuery] int? plantaId)
+    public async Task<ActionResult<IEnumerable<Area>>> GetAreas(
+        [FromQuery] int? plantaId,
+        [FromQuery] string? planta)
     {
-        var query = _context.Areas.AsQueryable();
+        var query = _context.Areas
+            .Include(a => a.Planta)
+            .AsQueryable();
         if (plantaId.HasValue)
             query = query.Where(a => a.PlantaId == plantaId);
+        if (!string.IsNullOrEmpty(planta))
+            query = query.Where(a => a.Planta.Codigo == planta);
         return await query.ToListAsync();
     }
 
@@ -34,5 +40,22 @@ public class AreasController : ControllerBase
         if (area == null)
             return NotFound();
         return area;
+    }
+
+    [HttpPut("{id}")]
+    [Authorize(Policy = "AdminOrSuperAdmin")]
+    public async Task<IActionResult> UpdateArea(int id, Area update)
+    {
+        var area = await _context.Areas.FindAsync(id);
+        if (area == null)
+            return NotFound();
+
+        if (!string.IsNullOrWhiteSpace(update.Alias))
+            area.Alias = update.Alias;
+        else if (update.Alias != null)
+            area.Alias = null;
+
+        await _context.SaveChangesAsync();
+        return NoContent();
     }
 }

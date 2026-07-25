@@ -5,7 +5,7 @@ import {
   Settings, ChevronDown, ChevronRight,
   ChevronLeft, ChevronRight as ChevronRightIcon,
   PanelLeft, Menu,
-  Expand, Shrink, RotateCw,
+  Expand, Shrink, RotateCw, X, Pencil,
 } from 'lucide-react';
 
 export const icons = {
@@ -30,6 +30,8 @@ export const icons = {
   menu: Menu,
   expand: Expand,
   shrink: Shrink,
+  close: X,
+  edit: Pencil,
 };
 
 export const iconSize = {

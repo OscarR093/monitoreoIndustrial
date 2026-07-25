@@ -9,8 +9,6 @@ const Expand = icons.expand;
 const Shrink = icons.shrink;
 
 export default function NavigationBar({
-  plantas, areas, selectedPlanta, selectedArea,
-  onPlantaChange, onAreaChange,
   wsStatus, alertCount, lastUpdate,
   onExpandAll, onCollapseAll,
 }) {
@@ -31,44 +29,10 @@ export default function NavigationBar({
 
   return (
     <header className="flex items-center justify-between bg-panel px-5 py-3 border-b-2 border-cyan-tech/20 shadow-lg shadow-cyan-tech/5">
-      <div className="flex items-center gap-6">
-        <div className="flex items-center gap-2">
-          <span className="font-mono text-base font-black text-cyan-tech tracking-[0.2em]">SCADA</span>
-          <span className="h-4 w-px bg-gridline" />
-          <span className="text-[10px] uppercase tracking-widest text-text-muted font-medium">Monitoreo Industrial</span>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 rounded border border-gridline bg-cyber-black px-3 py-1.5">
-            <label className="text-[10px] uppercase tracking-wider text-text-muted font-medium">Planta</label>
-            <select
-              value={selectedPlanta}
-              onChange={(e) => onPlantaChange(e.target.value)}
-              className="bg-transparent text-xs text-white focus:outline-none min-w-[100px]"
-            >
-              <option value="" className="bg-cyber-black">Seleccionar...</option>
-              {plantas.map((p) => (
-                <option key={p.id} value={p.codigo} className="bg-cyber-black">{p.nombre}</option>
-              ))}
-            </select>
-          </div>
-
-          {selectedPlanta && (
-            <div className="flex items-center gap-2 rounded border border-gridline bg-cyber-black px-3 py-1.5">
-              <label className="text-[10px] uppercase tracking-wider text-text-muted font-medium">Área</label>
-              <select
-                value={selectedArea}
-                onChange={(e) => onAreaChange(e.target.value)}
-                className="bg-transparent text-xs text-white focus:outline-none min-w-[100px]"
-              >
-                <option value="" className="bg-cyber-black">Seleccionar...</option>
-                {areas.map((a) => (
-                  <option key={a.id} value={a.codigo} className="bg-cyber-black">{a.nombre}</option>
-                ))}
-              </select>
-            </div>
-          )}
-        </div>
+      <div className="flex items-center gap-2">
+        <span className="font-mono text-base font-black text-cyan-tech tracking-[0.2em]">SCADA</span>
+        <span className="h-4 w-px bg-gridline" />
+        <span className="text-[10px] uppercase tracking-widest text-text-muted font-medium">Monitoreo Industrial</span>
       </div>
 
       <div className="flex items-center gap-5">

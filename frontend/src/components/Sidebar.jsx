@@ -5,6 +5,7 @@ import { icons, iconSize } from '../services/icons';
 
 const DashboardIcon = icons.dashboard;
 const UsersIcon = icons.users;
+const SettingsIcon = icons.settings;
 const ChevronLeftIcon = icons.chevronLeft;
 const MenuIcon = icons.menu;
 const LogOutIcon = icons.logout;
@@ -63,6 +64,13 @@ export default function Sidebar() {
             {open && 'Usuarios'}
           </Link>
         )}
+
+        <Link to="/settings" className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors ${
+          isActive('/settings') ? 'bg-cyan-tech/10 text-cyan-tech border-l-2 border-cyan-tech' : 'text-text-muted hover:bg-cyber-black hover:text-white border-l-2 border-transparent'
+        } ${!open && 'justify-center border-l-0'}`}>
+          <SettingsIcon size={iconSize.nav} />
+          {open && 'Configuración'}
+        </Link>
       </nav>
 
       <div className="border-t-2 border-cyan-tech/10 p-3">

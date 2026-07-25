@@ -9,6 +9,7 @@ public class Sensor
     public string SensorId { get; set; } = string.Empty;
     public int Registro { get; set; }
     public string Nombre { get; set; } = string.Empty;
+    public string? Alias { get; set; }
     public int TipoGraficoId { get; set; }
     public int UnidadId { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
