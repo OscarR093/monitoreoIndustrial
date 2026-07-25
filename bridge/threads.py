@@ -35,7 +35,16 @@ class HiloHistory(HiloBase):
 
     def run(self):
         print(f"[HISTORY] Hilo iniciado (intervalo: {self.intervalo}s)")
-        self.run_loop()
+        while not self.detener_event.is_set():
+            datos = self.plc.leer_history()
+            if datos:
+                self.mqtt_client.publicar(self.topic, datos)
+                print(f"[HISTORY]Publicado en {self.topic}")
+
+            for _ in range(self.intervalo):
+                if self.detener_event.is_set():
+                    break
+                time.sleep(1)
 
 
 class HiloRealTime(HiloBase):

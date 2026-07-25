@@ -76,7 +76,30 @@ public class SensoresController : ControllerBase
         else if (update.Alias != null)
             sensor.Alias = null;
 
-        // Se ignoran intentos de cambiar identificadores técnicos o claves foráneas
+        if (!string.IsNullOrWhiteSpace(update.TipoDato))
+            sensor.TipoDato = update.TipoDato;
+
+        if (update.AlarmaEnOn && update.AlarmaEnOff)
+            return BadRequest("AlarmaEnOn y AlarmaEnOff no pueden estar ambos activos al mismo tiempo");
+
+        if (update.RangoMinimo.HasValue && update.RangoMaximo.HasValue && update.RangoMinimo >= update.RangoMaximo)
+            return BadRequest("RangoMinimo debe ser menor que RangoMaximo");
+
+        sensor.AlarmaActiva = update.AlarmaActiva;
+
+        if (update.RangoMinimo.HasValue)
+            sensor.RangoMinimo = update.RangoMinimo;
+        else if (update.RangoMinimo != null)
+            sensor.RangoMinimo = null;
+
+        if (update.RangoMaximo.HasValue)
+            sensor.RangoMaximo = update.RangoMaximo;
+        else if (update.RangoMaximo != null)
+            sensor.RangoMaximo = null;
+
+        sensor.AlarmaEnOn = update.AlarmaEnOn;
+        sensor.AlarmaEnOff = update.AlarmaEnOff;
+
         await _context.SaveChangesAsync();
         return NoContent();
     }

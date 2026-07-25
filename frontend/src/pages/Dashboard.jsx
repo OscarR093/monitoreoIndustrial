@@ -112,7 +112,14 @@ export default function Dashboard() {
     let count = 0;
     for (const s of sensores) {
       const v = realtimeData[s.sensorId];
-      if (v != null && (v > 60)) count++;
+      if (v == null) continue;
+      if (s.tipoDato === 'digital') {
+        if (s.alarmaActiva && s.alarmaEnOn && v === 1) count++;
+        else if (s.alarmaActiva && s.alarmaEnOff && v === 0) count++;
+      } else {
+        const lo = s.rangoMinimo, hi = s.rangoMaximo;
+        if (s.alarmaActiva && lo != null && hi != null && (v < lo || v > hi)) count++;
+      }
     }
     return count;
   }, [sensores, realtimeData]);

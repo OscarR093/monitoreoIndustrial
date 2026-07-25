@@ -14,6 +14,7 @@ public class AppDbContext : DbContext
     public DbSet<Sensor> Sensores => Set<Sensor>();
     public DbSet<DatoSensor> DatosSensores => Set<DatoSensor>();
     public DbSet<Usuario> Usuarios => Set<Usuario>();
+    public DbSet<ConfiguracionAlarma> ConfiguracionesAlarma => Set<ConfiguracionAlarma>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -59,6 +60,9 @@ public class AppDbContext : DbContext
             entity.HasKey(e => e.Id);
             entity.Property(e => e.SensorId).IsRequired().HasMaxLength(20);
             entity.Property(e => e.Nombre).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.TipoDato).IsRequired().HasMaxLength(20).HasDefaultValue("analogico");
+            entity.Property(e => e.RangoMinimo).HasPrecision(10, 2);
+            entity.Property(e => e.RangoMaximo).HasPrecision(10, 2);
             entity.HasIndex(e => new { e.AreaId, e.SensorId }).IsUnique();
             entity.HasOne(e => e.Area)
                   .WithMany(a => a.Sensores)
@@ -78,12 +82,24 @@ public class AppDbContext : DbContext
         {
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Valor).HasPrecision(10, 2);
+            entity.Property(e => e.Cambios).HasDefaultValue(0);
             entity.HasOne(e => e.Sensor)
                   .WithMany(s => s.Datos)
                   .HasForeignKey(e => e.SensorId)
                   .OnDelete(DeleteBehavior.Cascade);
             entity.HasIndex(e => e.SensorId);
             entity.HasIndex(e => e.Timestamp);
+        });
+
+        modelBuilder.Entity<ConfiguracionAlarma>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Tipo).IsRequired().HasMaxLength(20);
+            entity.Property(e => e.ConfigJson).IsRequired().HasColumnType("text");
+            entity.HasOne(e => e.CreadoPor)
+                  .WithMany()
+                  .HasForeignKey(e => e.CreadoPorId)
+                  .OnDelete(DeleteBehavior.SetNull);
         });
 
         modelBuilder.Entity<Usuario>(entity =>
@@ -120,7 +136,8 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<TipoGrafico>().HasData(
             new TipoGrafico { Id = 1, Nombre = "línea", Descripcion = "Time Series", Widget = "line" },
             new TipoGrafico { Id = 2, Nombre = "gauge", Descripcion = "Indicador", Widget = "gauge" },
-            new TipoGrafico { Id = 3, Nombre = "bar", Descripcion = "Barras", Widget = "bar" }
+            new TipoGrafico { Id = 3, Nombre = "bar", Descripcion = "Barras", Widget = "bar" },
+            new TipoGrafico { Id = 4, Nombre = "Digital", Descripcion = "Estado ON/OFF", Widget = "status" }
         );
 
         modelBuilder.Entity<Unidad>().HasData(
@@ -129,7 +146,8 @@ public class AppDbContext : DbContext
             new Unidad { Id = 3, Nombre = "Voltaje", Simbolo = "V", Descripcion = "Voltios" },
             new Unidad { Id = 4, Nombre = "Corriente", Simbolo = "A", Descripcion = "Amperios" },
             new Unidad { Id = 5, Nombre = "Porcentaje", Simbolo = "%", Descripcion = "Porcentaje" },
-            new Unidad { Id = 6, Nombre = "RPM", Simbolo = "RPM", Descripcion = "Revoluciones por minuto" }
+            new Unidad { Id = 6, Nombre = "RPM", Simbolo = "RPM", Descripcion = "Revoluciones por minuto" },
+            new Unidad { Id = 7, Nombre = "Binario", Simbolo = "BOOL", Descripcion = "Valor booleano 0/1" }
         );
     }
 }

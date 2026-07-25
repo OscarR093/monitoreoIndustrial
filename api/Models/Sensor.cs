@@ -12,6 +12,13 @@ public class Sensor
     public string? Alias { get; set; }
     public int TipoGraficoId { get; set; }
     public int UnidadId { get; set; }
+    public string TipoDato { get; set; } = "analogico";
+    public bool AlarmaActiva { get; set; } = false;
+    public decimal? RangoMinimo { get; set; }
+    public decimal? RangoMaximo { get; set; }
+    public bool AlarmaEnOn { get; set; } = false;
+    public bool AlarmaEnOff { get; set; } = false;
+    public DateTime? UltimaAlarmaEnviada { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     [JsonIgnore]

@@ -99,10 +99,17 @@ public class MqttSubscriberService : BackgroundService
 
             using var scope = _serviceProvider.CreateScope();
             var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            var alarmService = scope.ServiceProvider.GetRequiredService<AlarmService>();
 
             foreach (var dato in datos)
             {
-                await GuardarDatoSensorAsync(dbContext, plantaCodigo, areaCodigo, dato);
+                var sensor = await GuardarDatoSensorAsync(dbContext, plantaCodigo, areaCodigo, dato);
+
+                if (esRealtime && sensor != null)
+                {
+                    try { await alarmService.VerificarAsync(sensor, dato.valor); }
+                    catch (Exception ex) { _logger.LogError(ex, "AlarmService error for sensor {SensorId}", sensor.SensorId); }
+                }
             }
 
             await dbContext.SaveChangesAsync();
@@ -114,7 +121,7 @@ public class MqttSubscriberService : BackgroundService
         }
     }
 
-    private async Task GuardarDatoSensorAsync(AppDbContext dbContext, string plantaCodigo, string areaCodigo, DatoSensorMessage dato)
+    private async Task<Sensor?> GuardarDatoSensorAsync(AppDbContext dbContext, string plantaCodigo, string areaCodigo, DatoSensorMessage dato)
     {
         var area = await dbContext.Areas
             .Include(a => a.Planta)
@@ -123,7 +130,7 @@ public class MqttSubscriberService : BackgroundService
         if (area == null)
         {
             _logger.LogWarning("Area not found: {Planta}/{Area}", plantaCodigo, areaCodigo);
-            return;
+            return null;
         }
 
         var sensor = await dbContext.Sensores
@@ -131,14 +138,13 @@ public class MqttSubscriberService : BackgroundService
 
         if (sensor == null)
         {
-            var primerUnidad = await dbContext.Unidades.FirstOrDefaultAsync();
-            var primerTipo = await dbContext.TipoGraficos.FirstOrDefaultAsync();
-
-            if (primerUnidad == null || primerTipo == null)
-            {
-                _logger.LogWarning("No unidades or tipos graficos configured");
-                return;
-            }
+            var esDigital = dato.tipo == "digital";
+            var unidadId = esDigital
+                ? (await dbContext.Unidades.FirstOrDefaultAsync(u => u.Simbolo == "BOOL"))?.Id ?? 1
+                : (await dbContext.Unidades.FirstOrDefaultAsync())?.Id ?? 1;
+            var tipoGraficoId = esDigital
+                ? (await dbContext.TipoGraficos.FirstOrDefaultAsync(t => t.Widget == "status"))?.Id ?? 1
+                : (await dbContext.TipoGraficos.FirstOrDefaultAsync())?.Id ?? 1;
 
             sensor = new Sensor
             {
@@ -146,23 +152,26 @@ public class MqttSubscriberService : BackgroundService
                 SensorId = dato.sensor,
                 Registro = 0,
                 Nombre = $"Sensor {dato.sensor}",
-                TipoGraficoId = primerTipo.Id,
-                UnidadId = primerUnidad.Id
+                TipoGraficoId = tipoGraficoId,
+                UnidadId = unidadId,
+                TipoDato = dato.tipo
             };
 
             dbContext.Sensores.Add(sensor);
             await dbContext.SaveChangesAsync();
-            _logger.LogInformation("Auto-created sensor: {SensorId}", dato.sensor);
+            _logger.LogInformation("Auto-created sensor: {SensorId} (tipo: {Tipo})", dato.sensor, dato.tipo);
         }
 
         var datoSensor = new DatoSensor
         {
             SensorId = sensor.Id,
             Valor = dato.valor,
+            Cambios = dato.cambios,
             Timestamp = (long)dato.timestamp
         };
 
         dbContext.DatosSensores.Add(datoSensor);
+        return sensor;
     }
 
     public override async Task StopAsync(CancellationToken cancellationToken)
@@ -179,5 +188,7 @@ public class DatoSensorMessage
 {
     public string sensor { get; set; } = "";
     public decimal valor { get; set; }
+    public int cambios { get; set; } = 0;
+    public string tipo { get; set; } = "analogico";
     public double timestamp { get; set; }
 }

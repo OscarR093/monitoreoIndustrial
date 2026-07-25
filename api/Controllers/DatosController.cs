@@ -40,6 +40,8 @@ public class DatosController : ControllerBase
         [FromQuery] int? sensorId,
         [FromQuery] string? planta,
         [FromQuery] string? area,
+        [FromQuery] long? from,
+        [FromQuery] long? to,
         [FromQuery] int limit = 100)
     {
         var query = _context.DatosSensores
@@ -53,6 +55,10 @@ public class DatosController : ControllerBase
             query = query.Where(d => d.Sensor!.Area.Planta.Codigo == planta);
         if (!string.IsNullOrEmpty(area))
             query = query.Where(d => d.Sensor!.Area.Codigo == area);
+        if (from.HasValue)
+            query = query.Where(d => d.Timestamp >= from.Value);
+        if (to.HasValue)
+            query = query.Where(d => d.Timestamp <= to.Value);
 
         var datos = await query
             .OrderByDescending(d => d.Timestamp)

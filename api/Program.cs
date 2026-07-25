@@ -70,6 +70,8 @@ builder.Services.AddAuthorization(options =>
 
 builder.Services.AddSingleton<JwtService>();
 builder.Services.AddSingleton<WebSocketRealtimeService>();
+builder.Services.AddScoped<AlarmService>();
+builder.Services.AddHttpClient("TelegramBot");
 builder.Services.AddHostedService<MqttSubscriberService>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
