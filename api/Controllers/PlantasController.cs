@@ -32,4 +32,22 @@ public class PlantasController : ControllerBase
             return NotFound();
         return planta;
     }
+
+    [HttpPut("{id}")]
+    [Authorize(Policy = "AdminOrSuperAdmin")]
+    public async Task<IActionResult> UpdatePlanta(int id, AreaUpdateDto update)
+    {
+        var planta = await _context.Plantas.FindAsync(id);
+        if (planta == null)
+            return NotFound();
+
+        if (update.Nombre != null && !string.IsNullOrWhiteSpace(update.Nombre))
+            planta.Nombre = update.Nombre;
+
+        if (update.Alias != null)
+            planta.Alias = string.IsNullOrWhiteSpace(update.Alias) ? null : update.Alias;
+
+        await _context.SaveChangesAsync();
+        return NoContent();
+    }
 }

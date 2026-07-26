@@ -27,6 +27,7 @@ public class AlarmService
 
         var enAlarma = sensor.TipoDato switch
         {
+            "digital" when sensor.ModoDigital == "contador" => VerificarAnalogico(sensor, valor),
             "digital" => VerificarDigital(sensor, valor),
             _ => VerificarAnalogico(sensor, valor)
         };

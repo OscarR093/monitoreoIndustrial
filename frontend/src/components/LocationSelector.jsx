@@ -8,21 +8,48 @@ const EditIcon = icons.edit;
 const XIcon = icons.close;
 
 export default function LocationSelector({
-  plantas, areas, selectedPlanta, selectedArea,
+  plantas: plantasProp, areas, selectedPlanta, selectedArea,
   onPlantaChange, onAreaChange,
 }) {
   const { user } = useAuth();
   const isAdmin = user?.rol === 'superadmin' || user?.rol === 'admin';
+
+  const [localPlantas, setLocalPlantas] = useState(plantasProp);
+
+  if (JSON.stringify(localPlantas.map((p) => p.id).sort()) !== JSON.stringify(plantasProp.map((p) => p.id).sort())) {
+    setLocalPlantas(plantasProp);
+  }
+
+  const [editingPlantaId, setEditingPlantaId] = useState(null);
+  const [editPlantaNombre, setEditPlantaNombre] = useState('');
+  const [editPlantaAlias, setEditPlantaAlias] = useState('');
+
   const [editingAreaId, setEditingAreaId] = useState(null);
   const [editAlias, setEditAlias] = useState('');
   const [localAreas, setLocalAreas] = useState(areas);
 
-  // ponytail: sync local aliases when areas prop changes (e.g. plant switch)
-  if (JSON.stringify(localAreas.map((a) => a.id)) !== JSON.stringify(areas.map((a) => a.id))) {
+  if (JSON.stringify(localAreas.map((a) => a.id).sort()) !== JSON.stringify(areas.map((a) => a.id).sort())) {
     setLocalAreas(areas);
   }
 
+  const selectedPlantaObj = localPlantas.find((p) => p.codigo === selectedPlanta);
   const selectedAreaObj = localAreas.find((a) => a.codigo === selectedArea);
+
+  const handleSavePlanta = async () => {
+    if (!selectedPlantaObj) return;
+    try {
+      await api.put(`/api/plantas/${selectedPlantaObj.id}`, {
+        nombre: editPlantaNombre.trim() || null,
+        alias: editPlantaAlias.trim() || null,
+      });
+      setLocalPlantas((prev) =>
+        prev.map((p) => (p.id === selectedPlantaObj.id ? { ...p, nombre: editPlantaNombre.trim() || p.nombre, alias: editPlantaAlias.trim() || null } : p))
+      );
+      setEditingPlantaId(null);
+    } catch (err) {
+      alert(err.message);
+    }
+  };
 
   const handleSaveAreaAlias = async () => {
     if (!selectedAreaObj) return;
@@ -49,10 +76,41 @@ export default function LocationSelector({
           className="bg-transparent text-sm text-white focus:outline-none min-w-[120px]"
         >
           <option value="" className="bg-cyber-black">Seleccionar...</option>
-          {plantas.map((p) => (
+          {localPlantas.map((p) => (
             <option key={p.id} value={p.codigo} className="bg-cyber-black">{getPlantaDisplayName(p)}</option>
           ))}
         </select>
+
+        {isAdmin && selectedPlantaObj && (
+          editingPlantaId === selectedPlantaObj.id ? (
+            <div className="flex items-center gap-1">
+              <input
+                type="text"
+                value={editPlantaNombre}
+                onChange={(e) => setEditPlantaNombre(e.target.value)}
+                className="w-24 rounded border border-gridline bg-cyber-black px-2 py-1 text-xs text-white focus:border-cyan-tech focus:outline-none"
+                placeholder="Nombre"
+              />
+              <input
+                type="text"
+                value={editPlantaAlias}
+                onChange={(e) => setEditPlantaAlias(e.target.value)}
+                className="w-24 rounded border border-gridline bg-cyber-black px-2 py-1 text-xs text-white focus:border-cyan-tech focus:outline-none"
+                placeholder="Alias"
+              />
+              <button onClick={handleSavePlanta} className="text-cyan-tech hover:text-white"><EditIcon size={14} /></button>
+              <button onClick={() => setEditingPlantaId(null)} className="text-text-muted hover:text-white"><XIcon size={14} /></button>
+            </div>
+          ) : (
+            <button
+              onClick={() => { setEditingPlantaId(selectedPlantaObj.id); setEditPlantaNombre(selectedPlantaObj.nombre || ''); setEditPlantaAlias(selectedPlantaObj.alias || ''); }}
+              className="text-text-muted/60 hover:text-cyan-tech transition-colors"
+              title="Editar nombre de planta"
+            >
+              <EditIcon size={14} />
+            </button>
+          )
+        )}
       </div>
 
       {selectedPlanta && (

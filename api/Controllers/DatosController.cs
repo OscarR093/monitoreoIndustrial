@@ -36,13 +36,14 @@ public class DatosController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<DatoSensorDto>>> GetDatos(
+    public async Task<ActionResult> GetDatos(
         [FromQuery] int? sensorId,
         [FromQuery] string? planta,
         [FromQuery] string? area,
         [FromQuery] long? from,
         [FromQuery] long? to,
-        [FromQuery] int limit = 100)
+        [FromQuery] int limit = 100,
+        [FromQuery] string? agregar = null)
     {
         var query = _context.DatosSensores
             .Include(d => d.Sensor)
@@ -80,7 +81,24 @@ public class DatosController : ControllerBase
             } : null
         }).ToList();
 
-        return result;
+        if (agregar == "diario" && sensorId.HasValue)
+        {
+            var sensor = await _context.Sensores.FindAsync(sensorId.Value);
+            if (sensor?.ModoDigital == "contador")
+            {
+                var diario = await _context.DatosSensores
+                    .Where(d => d.SensorId == sensorId.Value)
+                    .Where(d => d.Timestamp >= (from ?? 0) && d.Timestamp <= (to ?? long.MaxValue))
+                    .GroupBy(d => d.CreatedAt.Date)
+                    .Select(g => new { Dia = g.Key, Total = g.Sum(d => d.Cambios) })
+                    .OrderBy(g => g.Dia)
+                    .ToListAsync();
+
+                return Ok(new { raw = result, diario = diario.Select(d => new { dia = d.Dia.ToString("yyyy-MM-dd"), total = d.Total }) });
+            }
+        }
+
+        return Ok(result);
     }
 
     [HttpPost]

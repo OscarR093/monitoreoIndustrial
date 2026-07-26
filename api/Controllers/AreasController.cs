@@ -44,16 +44,17 @@ public class AreasController : ControllerBase
 
     [HttpPut("{id}")]
     [Authorize(Policy = "AdminOrSuperAdmin")]
-    public async Task<IActionResult> UpdateArea(int id, Area update)
+    public async Task<IActionResult> UpdateArea(int id, AreaUpdateDto update)
     {
         var area = await _context.Areas.FindAsync(id);
         if (area == null)
             return NotFound();
 
-        if (!string.IsNullOrWhiteSpace(update.Alias))
-            area.Alias = update.Alias;
-        else if (update.Alias != null)
-            area.Alias = null;
+        if (update.Nombre != null && !string.IsNullOrWhiteSpace(update.Nombre))
+            area.Nombre = update.Nombre;
+
+        if (update.Alias != null)
+            area.Alias = string.IsNullOrWhiteSpace(update.Alias) ? null : update.Alias;
 
         await _context.SaveChangesAsync();
         return NoContent();

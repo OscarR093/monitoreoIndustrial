@@ -65,40 +65,80 @@ public class SensoresController : ControllerBase
 
     [HttpPut("{id}")]
     [Authorize(Policy = "AdminOrSuperAdmin")]
-    public async Task<IActionResult> UpdateSensor(int id, Sensor update)
+    public async Task<IActionResult> UpdateSensor(int id, SensorUpdateDto update)
     {
-        var sensor = await _context.Sensores.FindAsync(id);
+        var sensor = await _context.Sensores
+            .Include(s => s.TipoGrafico)
+            .Include(s => s.Unidad)
+            .FirstOrDefaultAsync(s => s.Id == id);
         if (sensor == null)
             return NotFound();
 
-        if (!string.IsNullOrWhiteSpace(update.Alias))
-            sensor.Alias = update.Alias;
-        else if (update.Alias != null)
-            sensor.Alias = null;
+        if (update.Alias != null)
+            sensor.Alias = string.IsNullOrWhiteSpace(update.Alias) ? null : update.Alias;
 
-        if (!string.IsNullOrWhiteSpace(update.TipoDato))
+        if (update.Nombre != null && !string.IsNullOrWhiteSpace(update.Nombre))
+            sensor.Nombre = update.Nombre;
+
+        if (update.UnidadId.HasValue)
+            sensor.UnidadId = update.UnidadId.Value;
+
+        if (update.TipoGraficoId.HasValue)
+            sensor.TipoGraficoId = update.TipoGraficoId.Value;
+
+        if (update.TipoDato != null)
             sensor.TipoDato = update.TipoDato;
 
-        if (update.AlarmaEnOn && update.AlarmaEnOff)
+        if (update.ModoDigital != null)
+            sensor.ModoDigital = update.ModoDigital;
+
+        var tipo = sensor.TipoDato;
+        var modo = sensor.ModoDigital;
+
+        if (tipo == "digital" && modo != null && modo != "estado" && modo != "contador")
+            return BadRequest("ModoDigital debe ser 'estado' o 'contador' para sensores digitales");
+
+        if (tipo == "analogico" && modo != null)
+            return BadRequest("ModoDigital debe ser null para sensores analógicos");
+
+        if (tipo == "digital" && modo == null)
+            sensor.ModoDigital = "estado";
+
+        if (modo == "contador")
+        {
+            if (update.AlarmaEnOn == true || update.AlarmaEnOff == true)
+                return BadRequest("Sensores contador no pueden usar AlarmaEnOn/AlarmaEnOff. Use RangoMinimo/RangoMaximo.");
+            sensor.AlarmaEnOn = false;
+            sensor.AlarmaEnOff = false;
+        }
+        else if (modo == "estado")
+        {
+            if (update.RangoMinimo != null || update.RangoMaximo != null)
+                return BadRequest("Sensores de estado no pueden usar RangoMinimo/RangoMaximo. Use AlarmaEnOn/AlarmaEnOff.");
+            sensor.RangoMinimo = null;
+            sensor.RangoMaximo = null;
+        }
+
+        if (update.AlarmaEnOn == true && update.AlarmaEnOff == true)
             return BadRequest("AlarmaEnOn y AlarmaEnOff no pueden estar ambos activos al mismo tiempo");
 
-        if (update.RangoMinimo.HasValue && update.RangoMaximo.HasValue && update.RangoMinimo >= update.RangoMaximo)
+        if (update.RangoMinimo != null && update.RangoMaximo != null && update.RangoMinimo >= update.RangoMaximo)
             return BadRequest("RangoMinimo debe ser menor que RangoMaximo");
 
-        sensor.AlarmaActiva = update.AlarmaActiva;
+        if (update.AlarmaActiva.HasValue)
+            sensor.AlarmaActiva = update.AlarmaActiva.Value;
 
-        if (update.RangoMinimo.HasValue)
+        if (update.AlarmaEnOn.HasValue)
+            sensor.AlarmaEnOn = update.AlarmaEnOn.Value;
+
+        if (update.AlarmaEnOff.HasValue)
+            sensor.AlarmaEnOff = update.AlarmaEnOff.Value;
+
+        if (update.RangoMinimo != null)
             sensor.RangoMinimo = update.RangoMinimo;
-        else if (update.RangoMinimo != null)
-            sensor.RangoMinimo = null;
 
-        if (update.RangoMaximo.HasValue)
+        if (update.RangoMaximo != null)
             sensor.RangoMaximo = update.RangoMaximo;
-        else if (update.RangoMaximo != null)
-            sensor.RangoMaximo = null;
-
-        sensor.AlarmaEnOn = update.AlarmaEnOn;
-        sensor.AlarmaEnOff = update.AlarmaEnOff;
 
         await _context.SaveChangesAsync();
         return NoContent();

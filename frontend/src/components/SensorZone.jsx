@@ -13,7 +13,7 @@ const ZONE_ICONS = {
   'General': icons.settings,
 };
 
-export default function SensorZone({ name, sensores, realtimeData, storageKey, forceExpand, forceCollapse }) {
+export default function SensorZone({ name, sensores, realtimeData, storageKey, forceExpand, forceCollapse, onSensorUpdate }) {
   const [collapsed, setCollapsed] = useState(() => {
     try { return localStorage.getItem(storageKey) === 'true'; }
     catch { return false; }
@@ -53,7 +53,7 @@ export default function SensorZone({ name, sensores, realtimeData, storageKey, f
         <div className="border-l border-r border-b border-gridline rounded-b-lg bg-cyber-black/30 p-3">
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {sensores.map((s) => (
-              <SensorCard key={s.id} sensor={s} valor={realtimeData[s.sensorId]} />
+              <SensorCard key={s.id} sensor={s} valor={realtimeData[s.sensorId]} onSensorUpdate={onSensorUpdate} />
             ))}
           </div>
         </div>

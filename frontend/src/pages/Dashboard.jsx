@@ -108,14 +108,23 @@ export default function Dashboard() {
 
   const zones = useMemo(() => groupSensorsByZone(sensores), [sensores]);
 
+  const handleSensorUpdate = (id, updates) => {
+    setSensores((prev) => prev.map((s) => (s.id === id ? { ...s, ...updates } : s)));
+  };
+
   const alertCount = useMemo(() => {
     let count = 0;
     for (const s of sensores) {
       const v = realtimeData[s.sensorId];
       if (v == null) continue;
       if (s.tipoDato === 'digital') {
-        if (s.alarmaActiva && s.alarmaEnOn && v === 1) count++;
-        else if (s.alarmaActiva && s.alarmaEnOff && v === 0) count++;
+        if (s.modoDigital === 'contador') {
+          const lo = s.rangoMinimo, hi = s.rangoMaximo;
+          if (s.alarmaActiva && lo != null && hi != null && (v < lo || v > hi)) count++;
+        } else {
+          if (s.alarmaActiva && s.alarmaEnOn && v === 1) count++;
+          else if (s.alarmaActiva && s.alarmaEnOff && v === 0) count++;
+        }
       } else {
         const lo = s.rangoMinimo, hi = s.rangoMaximo;
         if (s.alarmaActiva && lo != null && hi != null && (v < lo || v > hi)) count++;
@@ -175,6 +184,7 @@ export default function Dashboard() {
             storageKey={`${zoneStorageKey}/${name}`}
             forceExpand={expandAll}
             forceCollapse={collapseAll}
+            onSensorUpdate={handleSensorUpdate}
           />
         ))}
       </div>

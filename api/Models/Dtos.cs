@@ -49,3 +49,24 @@ public class UsuarioDto
     public int? CreadoPorId { get; set; }
     public DateTime CreatedAt { get; set; }
 }
+
+public class SensorUpdateDto
+{
+    public string? Alias { get; set; }
+    public string? Nombre { get; set; }
+    public string? TipoDato { get; set; }
+    public string? ModoDigital { get; set; }
+    public int? UnidadId { get; set; }
+    public int? TipoGraficoId { get; set; }
+    public bool? AlarmaActiva { get; set; }
+    public decimal? RangoMinimo { get; set; }
+    public decimal? RangoMaximo { get; set; }
+    public bool? AlarmaEnOn { get; set; }
+    public bool? AlarmaEnOff { get; set; }
+}
+
+public class AreaUpdateDto
+{
+    public string? Nombre { get; set; }
+    public string? Alias { get; set; }
+}

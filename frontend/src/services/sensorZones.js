@@ -25,6 +25,12 @@ const sensorZones = {
       name: 'Motores',
       match: (sensor) => sensor.unidad?.simbolo === 'RPM',
     },
+    {
+      name: 'Contadores',
+      match: (sensor) =>
+        sensor.unidad?.simbolo === 'ud' ||
+        sensor.modoDigital === 'contador',
+    },
   ],
 };
 

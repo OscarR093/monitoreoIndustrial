@@ -139,12 +139,17 @@ public class MqttSubscriberService : BackgroundService
         if (sensor == null)
         {
             var esDigital = dato.tipo == "digital";
-            var unidadId = esDigital
-                ? (await dbContext.Unidades.FirstOrDefaultAsync(u => u.Simbolo == "BOOL"))?.Id ?? 1
-                : (await dbContext.Unidades.FirstOrDefaultAsync())?.Id ?? 1;
-            var tipoGraficoId = esDigital
-                ? (await dbContext.TipoGraficos.FirstOrDefaultAsync(t => t.Widget == "status"))?.Id ?? 1
-                : (await dbContext.TipoGraficos.FirstOrDefaultAsync())?.Id ?? 1;
+            var esContador = esDigital && dato.modo == "contador";
+            var unidadId = esContador
+                ? (await dbContext.Unidades.FirstOrDefaultAsync(u => u.Simbolo == "ud"))?.Id ?? 1
+                : esDigital
+                    ? (await dbContext.Unidades.FirstOrDefaultAsync(u => u.Simbolo == "BOOL"))?.Id ?? 1
+                    : (await dbContext.Unidades.FirstOrDefaultAsync())?.Id ?? 1;
+            var tipoGraficoId = esContador
+                ? (await dbContext.TipoGraficos.FirstOrDefaultAsync(t => t.Widget == "counter"))?.Id ?? 1
+                : esDigital
+                    ? (await dbContext.TipoGraficos.FirstOrDefaultAsync(t => t.Widget == "status"))?.Id ?? 1
+                    : (await dbContext.TipoGraficos.FirstOrDefaultAsync())?.Id ?? 1;
 
             sensor = new Sensor
             {
@@ -154,12 +159,13 @@ public class MqttSubscriberService : BackgroundService
                 Nombre = $"Sensor {dato.sensor}",
                 TipoGraficoId = tipoGraficoId,
                 UnidadId = unidadId,
-                TipoDato = dato.tipo
+                TipoDato = dato.tipo,
+                ModoDigital = esDigital ? dato.modo : null
             };
 
             dbContext.Sensores.Add(sensor);
             await dbContext.SaveChangesAsync();
-            _logger.LogInformation("Auto-created sensor: {SensorId} (tipo: {Tipo})", dato.sensor, dato.tipo);
+            _logger.LogInformation("Auto-created sensor: {SensorId} (tipo: {Tipo}, modo: {Modo})", dato.sensor, dato.tipo, dato.modo);
         }
 
         var datoSensor = new DatoSensor
@@ -190,5 +196,6 @@ public class DatoSensorMessage
     public decimal valor { get; set; }
     public int cambios { get; set; } = 0;
     public string tipo { get; set; } = "analogico";
+    public string modo { get; set; } = "estado";
     public double timestamp { get; set; }
 }

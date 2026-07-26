@@ -1,0 +1,202 @@
+- generic [active] [ref=f1e1]:
+  - generic [ref=f1e19]:
+    - complementary [ref=f1e20]:
+      - generic [ref=f1e21]:
+        - generic [ref=f1e22]: SCADA
+        - button [ref=f1e23]
+      - navigation [ref=f1e26]:
+        - generic [ref=f1e27]: Navegación
+        - link "Dashboard" [ref=f1e28] [cursor=pointer]:
+          - /url: /
+        - link "Usuarios" [ref=f1e34] [cursor=pointer]:
+          - /url: /users
+        - link "Configuración" [ref=f1e40] [cursor=pointer]:
+          - /url: /settings
+      - generic [ref=f1e44]:
+        - generic [ref=f1e45]:
+          - generic [ref=f1e46]: A
+          - generic [ref=f1e47]:
+            - paragraph [ref=f1e48]: admin
+            - paragraph [ref=f1e49]: superadmin
+        - button [ref=f1e50]
+    - main [ref=f1e55]:
+      - generic [ref=f1e56]:
+        - generic [ref=f1e57]:
+          - generic [ref=f1e58]:
+            - generic [ref=f1e59]: SCADA
+            - generic [ref=f1e61]: Monitoreo Industrial
+          - generic [ref=f1e62]:
+            - generic [ref=f1e63]: CONECTADO
+            - generic [ref=f1e67]:
+              - button "Expandir zonas" [ref=f1e68]
+              - button "Colapsar zonas" [ref=f1e78]
+            - generic [ref=f1e84]:
+              - generic [ref=f1e85]:
+                - generic [ref=f1e86]: Último dato
+                - generic [ref=f1e87]: 2:21:45 a.m.
+              - generic [ref=f1e89]: 2:21:45 a.m.
+        - generic [ref=f1e90]:
+          - generic [ref=f1e91]: Ubicación
+          - generic [ref=f1e92]:
+            - generic [ref=f1e93]: Planta
+            - combobox [ref=f1e94]:
+              - option "Seleccionar..."
+              - option "PlantonMTY" [selected]
+            - button "Editar nombre de planta" [ref=f1e95]
+          - generic [ref=f1e99]:
+            - generic [ref=f1e100]: Área
+            - combobox [ref=f1e101]:
+              - option "Seleccionar..."
+              - option "Área de estampados" [selected]
+            - button "Editar alias de a1" [ref=f1e102]
+        - generic [ref=f1e106]:
+          - generic [ref=f1e107]:
+            - button "Contadores 1/1 activos" [ref=f1e108]:
+              - generic [ref=f1e112]: Contadores
+              - generic [ref=f1e113]: 1/1 activos
+            - generic [ref=f1e117]:
+              - generic [ref=f1e118] [cursor=pointer]:
+                - generic [ref=f1e119]:
+                  - generic "c1" [ref=f1e120]: Piezas
+                  - generic [ref=f1e121]: CONT
+                  - button "Editar alias" [ref=f1e122]
+                - generic [ref=f1e128]:
+                  - generic [ref=f1e129]: 4,536
+                  - generic [ref=f1e130]: ud
+                - generic [ref=f1e132]:
+                  - generic [ref=f1e133]: 4,536
+                  - generic [ref=f1e134]: ud
+                - paragraph [ref=f1e136]: c1
+              - generic [ref=f1e364]:
+                - generic [ref=f1e365]:
+                  - generic [ref=f1e366]:
+                    - heading "Piezas" [level=2] [ref=f1e367]
+                    - paragraph [ref=f1e368]: c1 · () · digital
+                  - button [ref=f1e369]
+                - generic [ref=f1e373]:
+                  - generic [ref=f1e374]:
+                    - paragraph [ref=f1e375]: Actual
+                    - paragraph [ref=f1e376]: 4,536
+                  - generic [ref=f1e377]:
+                    - paragraph [ref=f1e378]: Mín / Máx
+                    - paragraph [ref=f1e379]: 2,959 / 4,524
+                  - generic [ref=f1e380]:
+                    - paragraph [ref=f1e381]: Promedio
+                    - paragraph [ref=f1e382]: 4,102.934
+                - generic [ref=f1e383]:
+                  - generic [ref=f1e384]:
+                    - generic [ref=f1e385]: Desde
+                    - textbox [ref=f1e386]: 2026-07-25T08:21
+                  - generic [ref=f1e387]:
+                    - generic [ref=f1e388]: Hasta
+                    - textbox [ref=f1e389]: 2026-07-26T08:21
+                - application [ref=f1e393]:
+                  - generic [ref=f1e1899]:
+                    - generic [ref=f1e1900]: "2750"
+                    - generic [ref=f1e1902]: "3300"
+                    - generic [ref=f1e1904]: "3850"
+                    - generic [ref=f1e1906]: "4400"
+                    - generic [ref=f1e1908]: "4950"
+                - generic [ref=f1e1910]:
+                  - heading "Tipo y unidad" [level=3] [ref=f1e1911]
+                  - generic [ref=f1e1912]:
+                    - generic [ref=f1e1913]:
+                      - generic [ref=f1e1914]: Tipo de gráfico
+                      - generic [ref=f1e1915]: Barras diarias
+                    - generic [ref=f1e1916]:
+                      - generic [ref=f1e1917]: Unidad
+                      - combobox [ref=f1e1918]:
+                        - option "Temperatura (°C)"
+                        - option "Presión (PSI)"
+                        - option "Voltaje (V)"
+                        - option "Corriente (A)"
+                        - option "Porcentaje (%)"
+                        - option "RPM (RPM)"
+                        - option "Unidades (ud)" [selected]
+                        - option "ON/OFF (ON/OFF)"
+                  - generic [ref=f1e4973]:
+                    - textbox "Nombre" [ref=f1e4974]
+                    - textbox "Símbolo" [ref=f1e4975]
+                    - button "Crear" [ref=f1e4976]
+                    - button "Cancelar" [ref=f1e4977]
+                - generic [ref=f1e1920]:
+                  - heading "Configuración de Alarma" [level=3] [ref=f1e1921]
+                  - generic [ref=f1e1922]:
+                    - generic [ref=f1e1923]: Alarma activa
+                    - checkbox [ref=f1e1924]
+                  - generic [ref=f1e1925]:
+                    - generic [ref=f1e1926]:
+                      - generic [ref=f1e1927]: Rango mínimo
+                      - spinbutton "Sin límite" [ref=f1e1928]
+                    - generic [ref=f1e1929]:
+                      - generic [ref=f1e1930]: Rango máximo
+                      - spinbutton "Sin límite" [ref=f1e1931]
+                - button "Guardar configuración" [ref=f1e1932]
+          - generic [ref=f1e138]:
+            - button "General 6/6 activos" [ref=f1e139]:
+              - generic [ref=f1e143]: General
+              - generic [ref=f1e144]: 6/6 activos
+            - generic [ref=f1e148]:
+              - generic [ref=f1e149] [cursor=pointer]:
+                - generic [ref=f1e150]:
+                  - generic "d1" [ref=f1e151]: Motor1
+                  - generic [ref=f1e152]: DIG
+                  - button "Editar alias" [ref=f1e153]
+                - generic [ref=f1e159]: "ON"
+                - generic [ref=f1e161]: ACTIVO
+                - paragraph [ref=f1e167]: d1
+              - generic [ref=f1e169] [cursor=pointer]:
+                - generic [ref=f1e170]:
+                  - generic "d2" [ref=f1e171]: Luces
+                  - generic [ref=f1e172]: DIG
+                  - button "Editar alias" [ref=f1e173]
+                - generic [ref=f1e179]: "ON"
+                - generic [ref=f1e181]: ACTIVO
+                - paragraph [ref=f1e187]: d2
+              - generic [ref=f1e189] [cursor=pointer]:
+                - generic [ref=f1e190]:
+                  - generic "s1" [ref=f1e191]: Sensor 1
+                  - button "Editar alias" [ref=f1e192]
+                - generic [ref=f1e198]: "101.7"
+                - application [ref=f1e203]:
+                  - generic [ref=f1e213]:
+                    - generic [ref=f1e214]: "102"
+                    - generic [ref=f1e216]: "105"
+                    - generic [ref=f1e218]: "108"
+                    - generic [ref=f1e220]: "111"
+                    - generic [ref=f1e222]: "114"
+                - paragraph [ref=f1e225]: s1
+              - generic [ref=f1e227] [cursor=pointer]:
+                - generic [ref=f1e228]:
+                  - generic "s2" [ref=f1e229]: Sensor 2
+                  - button "Editar alias" [ref=f1e230]
+                - generic [ref=f1e236]: "130.1"
+                - application [ref=f1e241]:
+                  - generic [ref=f1e251]:
+                    - generic [ref=f1e252]: "125"
+                    - generic [ref=f1e254]: "130"
+                    - generic [ref=f1e256]: "135"
+                    - generic [ref=f1e258]: "140"
+                    - generic [ref=f1e260]: "145"
+                - paragraph [ref=f1e263]: s2
+              - generic [ref=f1e265] [cursor=pointer]:
+                - generic [ref=f1e266]:
+                  - generic "s3" [ref=f1e267]
+                  - button "Editar alias" [ref=f1e268]
+                - generic [ref=f1e275]: "195.0"
+                - application [ref=f1e280]
+                - paragraph [ref=f1e282]: s3
+              - generic [ref=f1e284] [cursor=pointer]:
+                - generic [ref=f1e285]:
+                  - generic "s4" [ref=f1e286]
+                  - button "Editar alias" [ref=f1e287]
+                - generic [ref=f1e293]: "182.4"
+                - application [ref=f1e298]:
+                  - generic [ref=f1e308]:
+                    - generic [ref=f1e309]: "176"
+                    - generic [ref=f1e311]: "180"
+                    - generic [ref=f1e313]: "184"
+                    - generic [ref=f1e315]: "188"
+                    - generic [ref=f1e317]: "192"
+                - paragraph [ref=f1e320]: s4
+  - generic [ref=f1e322]: "4950"

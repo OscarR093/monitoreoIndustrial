@@ -43,7 +43,7 @@ public class SensorAreaAliasTests : IClassFixture<CustomWebApplicationFactory>
         var created = await sensor.Content.ReadFromJsonAsync<Sensor>();
         Assert.NotNull(created);
 
-        var put = await client.PutAsJsonAsync($"/api/sensores/{created!.Id}", new Sensor { Alias = "Tanque Norte" });
+        var put = await client.PutAsJsonAsync($"/api/sensores/{created!.Id}", new SensorUpdateDto { Alias = "Tanque Norte" });
         Assert.Equal(HttpStatusCode.NoContent, put.StatusCode);
 
         var get = await client.GetAsync($"/api/sensores/{created.Id}");
@@ -68,7 +68,7 @@ public class SensorAreaAliasTests : IClassFixture<CustomWebApplicationFactory>
         var viewer = _factory.CreateClient();
         await AuthenticateAs(viewer, "viewer_alias", "temp123");
 
-        var put = await viewer.PutAsJsonAsync("/api/sensores/1", new Sensor { Alias = "Hacked" });
+        var put = await viewer.PutAsJsonAsync("/api/sensores/1", new SensorUpdateDto { Alias = "Hacked" });
         Assert.Equal(HttpStatusCode.Forbidden, put.StatusCode);
     }
 
@@ -78,7 +78,7 @@ public class SensorAreaAliasTests : IClassFixture<CustomWebApplicationFactory>
         var client = _factory.CreateClient();
         await AuthenticateAs(client, "admin", "admin123");
 
-        var put = await client.PutAsJsonAsync("/api/areas/1", new Area { Alias = "Área de Moldeo" });
+        var put = await client.PutAsJsonAsync("/api/areas/1", new AreaUpdateDto { Alias = "Área de Moldeo" });
         Assert.Equal(HttpStatusCode.NoContent, put.StatusCode);
 
         var get = await client.GetAsync("/api/areas/1");
@@ -103,7 +103,7 @@ public class SensorAreaAliasTests : IClassFixture<CustomWebApplicationFactory>
         var viewer = _factory.CreateClient();
         await AuthenticateAs(viewer, "viewer_area", "temp123");
 
-        var put = await viewer.PutAsJsonAsync("/api/areas/1", new Area { Alias = "Hacked" });
+        var put = await viewer.PutAsJsonAsync("/api/areas/1", new AreaUpdateDto { Alias = "Hacked" });
         Assert.Equal(HttpStatusCode.Forbidden, put.StatusCode);
     }
 
@@ -112,7 +112,7 @@ public class SensorAreaAliasTests : IClassFixture<CustomWebApplicationFactory>
     {
         var client = _factory.CreateClient();
         await AuthenticateAs(client, "admin", "admin123");
-        await client.PutAsJsonAsync("/api/areas/1", new Area { Alias = "Línea de Llenado" });
+        await client.PutAsJsonAsync("/api/areas/1", new AreaUpdateDto { Alias = "Línea de Llenado" });
 
         var response = await client.GetAsync("/api/areas?planta=p1");
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);

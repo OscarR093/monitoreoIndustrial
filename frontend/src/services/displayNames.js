@@ -15,5 +15,5 @@ export function getAreaIdentifier(area) {
 }
 
 export function getPlantaDisplayName(planta) {
-  return planta?.nombre || planta?.codigo || 'Planta';
+  return planta?.alias?.trim() || planta?.nombre || planta?.codigo || 'Planta';
 }

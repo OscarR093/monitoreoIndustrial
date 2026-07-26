@@ -61,6 +61,7 @@ public class AppDbContext : DbContext
             entity.Property(e => e.SensorId).IsRequired().HasMaxLength(20);
             entity.Property(e => e.Nombre).IsRequired().HasMaxLength(100);
             entity.Property(e => e.TipoDato).IsRequired().HasMaxLength(20).HasDefaultValue("analogico");
+            entity.Property(e => e.ModoDigital).HasMaxLength(20);
             entity.Property(e => e.RangoMinimo).HasPrecision(10, 2);
             entity.Property(e => e.RangoMaximo).HasPrecision(10, 2);
             entity.HasIndex(e => new { e.AreaId, e.SensorId }).IsUnique();
@@ -137,7 +138,8 @@ public class AppDbContext : DbContext
             new TipoGrafico { Id = 1, Nombre = "línea", Descripcion = "Time Series", Widget = "line" },
             new TipoGrafico { Id = 2, Nombre = "gauge", Descripcion = "Indicador", Widget = "gauge" },
             new TipoGrafico { Id = 3, Nombre = "bar", Descripcion = "Barras", Widget = "bar" },
-            new TipoGrafico { Id = 4, Nombre = "Digital", Descripcion = "Estado ON/OFF", Widget = "status" }
+            new TipoGrafico { Id = 4, Nombre = "Digital", Descripcion = "Estado ON/OFF", Widget = "status" },
+            new TipoGrafico { Id = 5, Nombre = "Contador", Descripcion = "Conteo acumulado", Widget = "counter" }
         );
 
         modelBuilder.Entity<Unidad>().HasData(
@@ -147,7 +149,8 @@ public class AppDbContext : DbContext
             new Unidad { Id = 4, Nombre = "Corriente", Simbolo = "A", Descripcion = "Amperios" },
             new Unidad { Id = 5, Nombre = "Porcentaje", Simbolo = "%", Descripcion = "Porcentaje" },
             new Unidad { Id = 6, Nombre = "RPM", Simbolo = "RPM", Descripcion = "Revoluciones por minuto" },
-            new Unidad { Id = 7, Nombre = "Binario", Simbolo = "BOOL", Descripcion = "Valor booleano 0/1" }
+            new Unidad { Id = 7, Nombre = "ON/OFF", Simbolo = "ON/OFF", Descripcion = "Estado digital encendido/apagado" },
+            new Unidad { Id = 8, Nombre = "Unidades", Simbolo = "ud", Descripcion = "Unidades de conteo" }
         );
     }
 }

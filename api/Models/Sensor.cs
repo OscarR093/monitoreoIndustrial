@@ -13,6 +13,7 @@ public class Sensor
     public int TipoGraficoId { get; set; }
     public int UnidadId { get; set; }
     public string TipoDato { get; set; } = "analogico";
+    public string? ModoDigital { get; set; }
     public bool AlarmaActiva { get; set; } = false;
     public decimal? RangoMinimo { get; set; }
     public decimal? RangoMaximo { get; set; }
@@ -21,11 +22,8 @@ public class Sensor
     public DateTime? UltimaAlarmaEnviada { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-    [JsonIgnore]
     public Area? Area { get; set; }
-    [JsonIgnore]
     public TipoGrafico? TipoGrafico { get; set; }
-    [JsonIgnore]
     public Unidad? Unidad { get; set; }
     [JsonIgnore]
     public ICollection<DatoSensor> Datos { get; set; } = new List<DatoSensor>();

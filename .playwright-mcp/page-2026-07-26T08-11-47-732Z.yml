@@ -1,0 +1,130 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e19]:
+    - complementary [ref=e20]:
+      - generic [ref=e21]:
+        - generic [ref=e22]: SCADA
+        - button [ref=e23]
+      - navigation [ref=e26]:
+        - generic [ref=e27]: Navegación
+        - link "Dashboard" [ref=e28] [cursor=pointer]:
+          - /url: /
+        - link "Usuarios" [ref=e34] [cursor=pointer]:
+          - /url: /users
+        - link "Configuración" [ref=e40] [cursor=pointer]:
+          - /url: /settings
+      - generic [ref=e44]:
+        - generic [ref=e45]:
+          - generic [ref=e46]: A
+          - generic [ref=e47]:
+            - paragraph [ref=e48]: admin
+            - paragraph [ref=e49]: superadmin
+        - button [ref=e50]
+    - main [ref=e55]:
+      - generic [ref=e56]:
+        - generic [ref=e57]:
+          - generic [ref=e58]:
+            - generic [ref=e59]: SCADA
+            - generic [ref=e61]: Monitoreo Industrial
+          - generic [ref=e62]:
+            - generic [ref=e63]: CONECTADO
+            - generic [ref=e67]:
+              - button "Expandir zonas" [ref=e68]
+              - button "Colapsar zonas" [ref=e78]
+            - generic [ref=e84]:
+              - generic [ref=e85]:
+                - generic [ref=e86]: Último dato
+                - generic [ref=e87]: 2:11:46 a.m.
+              - generic [ref=e89]: 2:11:47 a.m.
+        - generic [ref=e90]:
+          - generic [ref=e91]: Ubicación
+          - generic [ref=e92]:
+            - generic [ref=e93]: Planta
+            - combobox [ref=e94]:
+              - option "Seleccionar..."
+              - option "PlantonMTY" [selected]
+            - button "Editar nombre de planta" [ref=e95]
+          - generic [ref=e99]:
+            - generic [ref=e100]: Área
+            - combobox [ref=e101]:
+              - option "Seleccionar..."
+              - option "Área de estampados" [selected]
+            - button "Editar alias de a1" [ref=e102]
+        - generic [ref=e106]:
+          - generic [ref=e107]:
+            - button "Contadores 1/1 activos" [ref=e108]:
+              - generic [ref=e112]: Contadores
+              - generic [ref=e113]: 1/1 activos
+            - generic [ref=e118] [cursor=pointer]:
+              - generic [ref=e119]:
+                - generic "c1" [ref=e120]: Piezas
+                - generic [ref=e121]: CONT
+                - button "Editar alias" [ref=e122]
+              - generic [ref=e128]:
+                - generic [ref=e129]: 4,372
+                - generic [ref=e130]: ud
+              - generic [ref=e132]:
+                - generic [ref=e133]: 4,372
+                - generic [ref=e134]: ud
+              - paragraph [ref=e136]: c1
+          - generic [ref=e138]:
+            - button "General 6/6 activos" [ref=e139]:
+              - generic [ref=e143]: General
+              - generic [ref=e144]: 6/6 activos
+            - generic [ref=e148]:
+              - generic [ref=e149] [cursor=pointer]:
+                - generic [ref=e150]:
+                  - generic "d1" [ref=e151]: Motor1
+                  - generic [ref=e152]: DIG
+                  - button "Editar alias" [ref=e153]
+                - generic [ref=e159]: "OFF"
+                - generic [ref=e161]: INACTIVO
+                - paragraph [ref=e167]: d1
+              - generic [ref=e169] [cursor=pointer]:
+                - generic [ref=e170]:
+                  - generic "d2" [ref=e171]: Luces
+                  - generic [ref=e172]: DIG
+                  - button "Editar alias" [ref=e173]
+                - generic [ref=e179]: "OFF"
+                - generic [ref=e181]: INACTIVO
+                - paragraph [ref=e187]: d2
+              - generic [ref=e189] [cursor=pointer]:
+                - generic [ref=e190]:
+                  - generic "s1" [ref=e191]: Sensor 1
+                  - button "Editar alias" [ref=e192]
+                - generic [ref=e198]: "107.7"
+                - application [ref=e581]
+                - paragraph [ref=e245]: s1
+              - generic [ref=e247] [cursor=pointer]:
+                - generic [ref=e248]:
+                  - generic "s2" [ref=e249]: Sensor 2
+                  - button "Editar alias" [ref=e250]
+                - generic [ref=e256]: "141.6"
+                - application [ref=e261]:
+                  - generic [ref=e269]:
+                    - generic [ref=e270]: "132"
+                    - generic [ref=e272]: "135"
+                    - generic [ref=e274]: "138"
+                    - generic [ref=e276]: "141"
+                    - generic [ref=e278]: "144"
+                - paragraph [ref=e281]: s2
+              - generic [ref=e283] [cursor=pointer]:
+                - generic [ref=e284]:
+                  - generic "s3" [ref=e285]
+                  - button "Editar alias" [ref=e286]
+                - generic [ref=e293]: "197.9"
+                - application [ref=e298]
+                - paragraph [ref=e300]: s3
+              - generic [ref=e302] [cursor=pointer]:
+                - generic [ref=e303]:
+                  - generic "s4" [ref=e304]
+                  - button "Editar alias" [ref=e305]
+                - generic [ref=e311]: "197.8"
+                - application [ref=e316]:
+                  - generic [ref=e324]:
+                    - generic [ref=e325]: "189"
+                    - generic [ref=e327]: "192"
+                    - generic [ref=e329]: "195"
+                    - generic [ref=e331]: "198"
+                    - generic [ref=e333]: "201"
+                - paragraph [ref=e336]: s4
+  - generic [ref=e338]: "180"

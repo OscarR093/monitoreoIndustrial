@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using api.Data;
@@ -11,9 +12,11 @@ using api.Data;
 namespace api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260726065450_AddModoDigital")]
+    partial class AddModoDigital
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -141,9 +144,6 @@ namespace api.Migrations
                         .HasColumnType("integer");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Alias")
-                        .HasColumnType("text");
 
                     b.Property<string>("Codigo")
                         .IsRequired()
@@ -390,9 +390,9 @@ namespace api.Migrations
                         new
                         {
                             Id = 7,
-                            Descripcion = "Estado digital encendido/apagado",
-                            Nombre = "ON/OFF",
-                            Simbolo = "ON/OFF"
+                            Descripcion = "Valor booleano 0/1",
+                            Nombre = "Binario",
+                            Simbolo = "BOOL"
                         },
                         new
                         {
