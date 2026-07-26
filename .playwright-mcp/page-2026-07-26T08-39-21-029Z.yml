@@ -1,0 +1,167 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e5]:
+    - complementary [ref=e6]:
+      - generic [ref=e7]:
+        - generic [ref=e8]: SCADA
+        - button [ref=e9]
+      - navigation [ref=e12]:
+        - generic [ref=e13]: Navegación
+        - link "Dashboard" [ref=e14] [cursor=pointer]:
+          - /url: /
+        - link "Usuarios" [ref=e20] [cursor=pointer]:
+          - /url: /users
+        - link "Configuración" [ref=e26] [cursor=pointer]:
+          - /url: /settings
+      - generic [ref=e30]:
+        - generic [ref=e31]:
+          - generic [ref=e32]: A
+          - generic [ref=e33]:
+            - paragraph [ref=e34]: Super Administrador
+            - paragraph [ref=e35]: superadmin
+        - button [ref=e36]
+    - main [ref=e41]:
+      - generic [ref=e42]:
+        - generic [ref=e43]:
+          - generic [ref=e44]:
+            - generic [ref=e45]: SCADA
+            - generic [ref=e47]: Monitoreo Industrial
+          - generic [ref=e48]:
+            - generic [ref=e49]: CONECTADO
+            - generic [ref=e53]:
+              - button "Expandir zonas" [ref=e54]
+              - button "Colapsar zonas" [ref=e64]
+            - generic [ref=e70]:
+              - generic [ref=e71]:
+                - generic [ref=e72]: Último dato
+                - generic [ref=e73]: 2:39:20 a.m.
+              - generic [ref=e75]: 2:39:20 a.m.
+        - generic [ref=e76]:
+          - generic [ref=e77]: Ubicación
+          - generic [ref=e78]:
+            - generic [ref=e79]: Planta
+            - combobox [ref=e80]:
+              - option "Seleccionar..."
+              - option "PlantonMTY" [selected]
+            - button "Editar nombre de planta" [ref=e81]
+          - generic [ref=e85]:
+            - generic [ref=e86]: Área
+            - combobox [ref=e87]:
+              - option "Seleccionar..."
+              - option "Área de estampados" [selected]
+            - button "Editar alias de a1" [ref=e88]
+        - generic [ref=e92]:
+          - generic [ref=e93]:
+            - button "Temperaturas 2/2 activos" [ref=e521]:
+              - generic [ref=e97]: Temperaturas
+              - generic [ref=e98]: 2/2 activos
+            - generic [ref=e102]:
+              - generic [ref=e140] [cursor=pointer]:
+                - generic [ref=e141]:
+                  - generic "s2" [ref=e142]: Sensor 2
+                  - button "Editar alias" [ref=e143]
+                - generic [ref=e149]:
+                  - generic [ref=e150]: "126.3"
+                  - generic [ref=e151]: °C
+                - application [ref=e155]:
+                  - generic [ref=e163]:
+                    - generic [ref=e164]: "126"
+                    - generic [ref=e166]: "129"
+                    - generic [ref=e168]: "132"
+                    - generic [ref=e170]: "135"
+                    - generic [ref=e172]: "138"
+                - paragraph [ref=e175]: s2
+              - generic [ref=e177] [cursor=pointer]:
+                - generic [ref=e178]:
+                  - generic "s4" [ref=e179]
+                  - button "Editar alias" [ref=e180]
+                - generic [ref=e186]:
+                  - generic [ref=e187]: "188.7"
+                  - generic [ref=e188]: °C
+                - application [ref=e192]:
+                  - generic [ref=e200]:
+                    - generic [ref=e201]: "186"
+                    - generic [ref=e203]: "188"
+                    - generic [ref=e205]: "190"
+                    - generic [ref=e207]: "192"
+                    - generic [ref=e209]: "194"
+                - paragraph [ref=e212]: s4
+          - generic [ref=e530]:
+            - button "Presiones 1/1 activos" [ref=e531]:
+              - generic [ref=e535]: Presiones
+              - generic [ref=e536]: 1/1 activos
+            - generic [ref=e541] [cursor=pointer]:
+              - generic [ref=e542]:
+                - generic "s1" [ref=e543]: Sensor 1
+                - button "Editar alias" [ref=e544]
+              - generic [ref=e550]:
+                - generic [ref=e551]: "133.6"
+                - generic [ref=e552]: PSI
+              - application [ref=e556]:
+                - generic [ref=e564]:
+                  - generic [ref=e565]: "124"
+                  - generic [ref=e567]: "128"
+                  - generic [ref=e569]: "132"
+                  - generic [ref=e571]: "136"
+                  - generic [ref=e573]: "140"
+              - paragraph [ref=e576]: s1
+          - generic [ref=e214]:
+            - button "Eléctricos 1/1 activos" [ref=e215]:
+              - generic [ref=e218]: Eléctricos
+              - generic [ref=e219]: 1/1 activos
+            - generic [ref=e224] [cursor=pointer]:
+              - generic [ref=e225]:
+                - generic "s3" [ref=e226]: Sensor de velocidad
+                - button "Editar alias" [ref=e227]
+              - generic [ref=e233]:
+                - generic [ref=e234]: "185.8"
+                - generic [ref=e235]: A
+              - application [ref=e239]:
+                - generic [ref=e247]:
+                  - generic [ref=e248]: "184"
+                  - generic [ref=e250]: "188"
+                  - generic [ref=e252]: "192"
+                  - generic [ref=e254]: "196"
+                  - generic [ref=e256]: "200"
+              - paragraph [ref=e259]: s3
+          - generic [ref=e261]:
+            - button "Contadores 1/1 activos" [ref=e262]:
+              - generic [ref=e266]: Contadores
+              - generic [ref=e267]: 1/1 activos
+            - generic [ref=e272] [cursor=pointer]:
+              - generic [ref=e273]:
+                - generic "c1" [ref=e274]: Piezas
+                - generic [ref=e275]: CONT
+                - button "Editar alias" [ref=e276]
+              - generic [ref=e282]:
+                - generic [ref=e283]: 4,934
+                - generic [ref=e284]: ud
+              - generic [ref=e286]:
+                - generic [ref=e287]: 4,934
+                - generic [ref=e288]: ud
+              - paragraph [ref=e290]: c1
+          - generic [ref=e292]:
+            - button "General 2/2 activos" [ref=e293]:
+              - generic [ref=e297]: General
+              - generic [ref=e298]: 2/2 activos
+            - generic [ref=e302]:
+              - generic [ref=e303] [cursor=pointer]:
+                - generic [ref=e304]:
+                  - generic "d1" [ref=e305]: Motor1
+                  - generic [ref=e306]: DIG
+                  - button "Editar alias" [ref=e307]
+                - generic [ref=e313]:
+                  - generic [ref=e314]: "ON"
+                  - generic [ref=e315]: ON/OFF
+                - generic [ref=e316]: ACTIVO
+                - paragraph [ref=e322]: d1
+              - generic [ref=e324] [cursor=pointer]:
+                - generic [ref=e325]:
+                  - generic "d2" [ref=e326]: Luces
+                  - generic [ref=e327]: DIG
+                  - button "Editar alias" [ref=e328]
+                - generic [ref=e334]:
+                  - generic [ref=e335]: "ON"
+                  - generic [ref=e336]: ON/OFF
+                - generic [ref=e337]: ACTIVO
+                - paragraph [ref=e343]: d2
+  - generic [ref=e345]: "140"

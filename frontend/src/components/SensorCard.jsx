@@ -373,7 +373,14 @@ function SensorDetailModal({ sensor, valor, history, status, onSensorUpdate, onC
         tipoGraficoId: isDigital ? undefined : tipoGraficoId,
       };
       await api.put(`/api/sensores/${sensor.id}`, body);
-      if (onSensorUpdate) onSensorUpdate(sensor.id, { unidadId, tipoGraficoId: isDigital ? sensor.tipoGraficoId : tipoGraficoId });
+      if (onSensorUpdate) {
+        const newUnidad = unidades.find((u) => u.id === unidadId);
+        onSensorUpdate(sensor.id, {
+          unidadId,
+          unidad: newUnidad || sensor.unidad,
+          tipoGraficoId: isDigital ? sensor.tipoGraficoId : tipoGraficoId,
+        });
+      }
     } catch (err) {
       alert(err.message);
     } finally {
