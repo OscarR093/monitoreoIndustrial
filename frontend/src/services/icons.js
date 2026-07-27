@@ -6,6 +6,8 @@ import {
   ChevronLeft, ChevronRight as ChevronRightIcon,
   PanelLeft, Menu,
   Expand, Shrink, RotateCw, X, Pencil,
+  Mail, MessageCircle, Smartphone, Send,
+  Lock, Bell, User,
 } from 'lucide-react';
 
 export const icons = {
@@ -32,6 +34,13 @@ export const icons = {
   shrink: Shrink,
   close: X,
   edit: Pencil,
+  mail: Mail,
+  message: MessageCircle,
+  smartphone: Smartphone,
+  send: Send,
+  lock: Lock,
+  bell: Bell,
+  user: User,
 };
 
 export const iconSize = {

@@ -14,11 +14,13 @@ public class AuthController : ControllerBase
 {
     private readonly AppDbContext _context;
     private readonly JwtService _jwtService;
+    private readonly EmailService _emailService;
 
-    public AuthController(AppDbContext context, JwtService jwtService)
+    public AuthController(AppDbContext context, JwtService jwtService, EmailService emailService)
     {
         _context = context;
         _jwtService = jwtService;
+        _emailService = emailService;
     }
 
     [HttpPost("login")]
@@ -181,14 +183,25 @@ public class AuthController : ControllerBase
         if (usuario == null)
             return NotFound();
 
+        if (!BCrypt.Net.BCrypt.Verify(request.CurrentPassword, usuario.PasswordHash))
+            return Unauthorized(new { message = "Contraseña actual incorrecta" });
+
         if (!string.IsNullOrEmpty(request.NombreCompleto))
             usuario.NombreCompleto = request.NombreCompleto;
-        if (!string.IsNullOrEmpty(request.Email))
-            usuario.Email = request.Email;
-        if (!string.IsNullOrEmpty(request.Telefono))
-            usuario.Telefono = request.Telefono;
-        if (!string.IsNullOrEmpty(request.NuevaPassword))
-            usuario.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NuevaPassword);
+
+        if (request.Email != null)
+        {
+            var oldEmail = usuario.Email;
+            if (!string.IsNullOrWhiteSpace(request.Email))
+                usuario.Email = request.Email;
+            else
+                usuario.Email = null;
+            if (usuario.Email != oldEmail)
+                usuario.EmailChangedAt = DateTime.UtcNow;
+        }
+
+        if (request.Telefono != null)
+            usuario.Telefono = string.IsNullOrWhiteSpace(request.Telefono) ? null : request.Telefono;
 
         usuario.UpdatedAt = DateTime.UtcNow;
         await _context.SaveChangesAsync();
@@ -295,5 +308,69 @@ public class AuthController : ControllerBase
         await _context.SaveChangesAsync();
 
         return Ok(new { message = "Usuario eliminado" });
+    }
+
+    [HttpPost("send-pin")]
+    [Authorize]
+    public async Task<ActionResult<SendPinResponse>> SendPin([FromBody] SendPinRequest request)
+    {
+        var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var usuario = await _context.Usuarios.FindAsync(userId);
+        if (usuario == null) return NotFound();
+
+        if (!BCrypt.Net.BCrypt.Verify(request.CurrentPassword, usuario.PasswordHash))
+            return Unauthorized(new { message = "Contraseña actual incorrecta" });
+
+        if (usuario.EmailChangedAt.HasValue && DateTime.UtcNow - usuario.EmailChangedAt.Value < TimeSpan.FromMinutes(5))
+            return BadRequest(new { message = "El email fue cambiado recientemente. Espera 5 minutos antes de solicitar un PIN." });
+
+        var pin = new Random().Next(100000, 999999).ToString();
+        var expiraEn = DateTime.UtcNow.AddMinutes(5);
+
+        _context.Set<PinVerification>().Add(new PinVerification
+        {
+            UsuarioId = userId,
+            Pin = pin,
+            ExpiraEn = expiraEn,
+        });
+        await _context.SaveChangesAsync();
+
+        var emailSent = false;
+        if (!string.IsNullOrEmpty(usuario.Email) && _emailService.IsEnabled)
+        {
+            await _emailService.SendPinAsync(usuario.Email, pin);
+            emailSent = true;
+        }
+
+        return Ok(new SendPinResponse
+        {
+            EmailSent = emailSent,
+            Pin = _emailService.IsEnabled ? null : pin,
+        });
+    }
+
+    [HttpPost("verify-pin")]
+    [Authorize]
+    public async Task<IActionResult> VerifyPin([FromBody] VerifyPinRequest request)
+    {
+        var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+        var verificacion = await _context.Set<PinVerification>()
+            .Where(p => p.UsuarioId == userId && !p.Usado && p.ExpiraEn > DateTime.UtcNow)
+            .OrderByDescending(p => p.CreatedAt)
+            .FirstOrDefaultAsync();
+
+        if (verificacion == null || verificacion.Pin != request.Pin)
+            return BadRequest(new { message = "PIN inválido o expirado" });
+
+        verificacion.Usado = true;
+
+        var usuario = await _context.Usuarios.FindAsync(userId);
+        if (usuario == null) return NotFound();
+        usuario.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
+        usuario.UpdatedAt = DateTime.UtcNow;
+
+        await _context.SaveChangesAsync();
+        return Ok(new { message = "Contraseña actualizada" });
     }
 }

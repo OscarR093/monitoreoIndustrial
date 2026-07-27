@@ -15,6 +15,7 @@ public class AppDbContext : DbContext
     public DbSet<DatoSensor> DatosSensores => Set<DatoSensor>();
     public DbSet<Usuario> Usuarios => Set<Usuario>();
     public DbSet<ConfiguracionAlarma> ConfiguracionesAlarma => Set<ConfiguracionAlarma>();
+    public DbSet<PinVerification> PinVerifications => Set<PinVerification>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -101,6 +102,13 @@ public class AppDbContext : DbContext
                   .WithMany()
                   .HasForeignKey(e => e.CreadoPorId)
                   .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<PinVerification>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Pin).IsRequired().HasMaxLength(6);
+            entity.HasIndex(e => new { e.UsuarioId, e.ExpiraEn });
         });
 
         modelBuilder.Entity<Usuario>(entity =>

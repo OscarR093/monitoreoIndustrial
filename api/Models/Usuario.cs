@@ -11,6 +11,7 @@ public class Usuario
     public string? NombreCompleto { get; set; }
     public string? Email { get; set; }
     public string? Telefono { get; set; }
+    public DateTime? EmailChangedAt { get; set; }
     public bool DebeCambiarInfo { get; set; } = true;
     public int? CreadoPorId { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

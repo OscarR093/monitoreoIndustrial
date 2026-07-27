@@ -1,5 +1,3 @@
-using System.Net;
-using System.Net.Mail;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using api.Data;
@@ -11,13 +9,15 @@ public class AlarmService
 {
     private readonly AppDbContext _context;
     private readonly IHttpClientFactory _httpClientFactory;
+    private readonly EmailService _emailService;
     private readonly ILogger<AlarmService> _logger;
     private static readonly TimeSpan Cooldown = TimeSpan.FromMinutes(5);
 
-    public AlarmService(AppDbContext context, IHttpClientFactory httpClientFactory, ILogger<AlarmService> logger)
+    public AlarmService(AppDbContext context, IHttpClientFactory httpClientFactory, EmailService emailService, ILogger<AlarmService> logger)
     {
         _context = context;
         _httpClientFactory = httpClientFactory;
+        _emailService = emailService;
         _logger = logger;
     }
 
@@ -46,10 +46,21 @@ public class AlarmService
         {
             try
             {
-                if (canal.Tipo == "telegram")
-                    await EnviarTelegram(canal.ConfigJson, sensor, valor);
-                else if (canal.Tipo == "email")
-                    await EnviarEmail(canal.ConfigJson, sensor, valor);
+                switch (canal.Tipo)
+                {
+                    case "telegram":
+                        await EnviarTelegram(canal.ConfigJson, sensor, valor);
+                        break;
+                    case "email":
+                        await EnviarEmailResend(canal.ConfigJson, sensor, valor);
+                        break;
+                    case "whatsapp":
+                        await EnviarWhatsapp(canal.ConfigJson, sensor, valor);
+                        break;
+                    case "sms":
+                        await EnviarSms(canal.ConfigJson, sensor, valor);
+                        break;
+                }
             }
             catch (Exception ex)
             {
@@ -96,27 +107,96 @@ public class AlarmService
             _logger.LogWarning("Telegram API error: {StatusCode}", response.StatusCode);
     }
 
-    private async Task EnviarEmail(string configJson, Sensor sensor, decimal valor)
+    private async Task EnviarEmailResend(string configJson, Sensor sensor, decimal valor)
     {
         using var doc = JsonDocument.Parse(configJson);
         var root = doc.RootElement;
-        var host = root.GetProperty("smtpHost").GetString()!;
-        var port = root.GetProperty("smtpPort").GetInt32();
-        var username = root.TryGetProperty("username", out var u) ? u.GetString() : null;
-        var password = root.TryGetProperty("password", out var p) ? p.GetString() : null;
-        var fromEmail = root.TryGetProperty("fromEmail", out var fe) ? fe.GetString() : username;
-        var toEmail = root.TryGetProperty("toEmail", out var te) ? te.GetString() : username;
+        var apiKey = root.TryGetProperty("apiKey", out var k) ? k.GetString() : null;
+        var fromEmail = root.TryGetProperty("fromEmail", out var fe) ? fe.GetString() : null;
 
-        using var client = new SmtpClient(host, port);
-        client.EnableSsl = true;
-        client.Timeout = 5000;
+        var destinatarios = await _context.Usuarios
+            .Where(u => u.Email != null && u.Email != "")
+            .Select(u => u.Email!)
+            .ToListAsync();
 
-        if (!string.IsNullOrEmpty(username) && !string.IsNullOrEmpty(password))
-            client.Credentials = new NetworkCredential(username, password);
+        if (destinatarios.Count == 0)
+        {
+            _logger.LogWarning("No hay usuarios con email configurado para notificar");
+            return;
+        }
 
         var subject = $"ALARMA: {sensor.Nombre} - Valor: {valor}";
         var body = $"Sensor: {sensor.Nombre} ({sensor.SensorId})\nValor: {valor}\nTimestamp: {DateTime.UtcNow:u}";
 
-        await client.SendMailAsync(fromEmail!, toEmail!, subject, body);
+        await _emailService.SendAlarmAsync(apiKey ?? "", fromEmail ?? "", destinatarios, subject, body);
+    }
+
+    private async Task EnviarWhatsapp(string configJson, Sensor sensor, decimal valor)
+    {
+        using var doc = JsonDocument.Parse(configJson);
+        var root = doc.RootElement;
+        var phoneNumberId = root.TryGetProperty("phoneNumberId", out var pn) ? pn.GetString() : null;
+        var accessToken = root.TryGetProperty("accessToken", out var at) ? at.GetString() : null;
+
+        if (string.IsNullOrEmpty(phoneNumberId) || string.IsNullOrEmpty(accessToken))
+        {
+            _logger.LogWarning("WhatsApp not configured, skipping");
+            return;
+        }
+
+        var destinatarios = await _context.Usuarios
+            .Where(u => u.Telefono != null && u.Telefono != "")
+            .Select(u => u.Telefono!)
+            .ToListAsync();
+
+        if (destinatarios.Count == 0)
+        {
+            _logger.LogWarning("No hay usuarios con telefono configurado para WhatsApp");
+            return;
+        }
+
+        var mensaje = $"ALARMA: {sensor.Nombre} ({sensor.SensorId})\nValor: {valor}";
+
+        // ponytail: Meta Business API placeholder — POST a graph.facebook.com/v21.0/{phoneNumberId}/messages
+        // Implementar cuando el canal esté activo y haya accessToken válido
+        foreach (var to in destinatarios)
+        {
+            _logger.LogInformation("[WhatsApp STUB] To: {Phone}, From: {PhoneId}, Msg: {Msg}", to, phoneNumberId, mensaje);
+        }
+    }
+
+    private async Task EnviarSms(string configJson, Sensor sensor, decimal valor)
+    {
+        using var doc = JsonDocument.Parse(configJson);
+        var root = doc.RootElement;
+        var accountSid = root.TryGetProperty("accountSid", out var sid) ? sid.GetString() : null;
+        var authToken = root.TryGetProperty("authToken", out var at) ? at.GetString() : null;
+        var fromNumber = root.TryGetProperty("fromNumber", out var fn) ? fn.GetString() : null;
+
+        if (string.IsNullOrEmpty(accountSid) || string.IsNullOrEmpty(authToken) || string.IsNullOrEmpty(fromNumber))
+        {
+            _logger.LogWarning("SMS not configured, skipping");
+            return;
+        }
+
+        var destinatarios = await _context.Usuarios
+            .Where(u => u.Telefono != null && u.Telefono != "")
+            .Select(u => u.Telefono!)
+            .ToListAsync();
+
+        if (destinatarios.Count == 0)
+        {
+            _logger.LogWarning("No hay usuarios con telefono configurado para SMS");
+            return;
+        }
+
+        var mensaje = $"ALARMA: {sensor.Nombre} ({sensor.SensorId}) - Valor: {valor}";
+
+        // ponytail: Twilio API placeholder — POST a api.twilio.com/2010-04-01/Accounts/{sid}/Messages.json
+        // Implementar cuando el canal esté activo y haya credenciales Twilio válidas
+        foreach (var to in destinatarios)
+        {
+            _logger.LogInformation("[SMS STUB] To: {To}, From: {From}, Body: {Msg}", to, fromNumber, mensaje);
+        }
     }
 }

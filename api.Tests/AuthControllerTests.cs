@@ -252,7 +252,8 @@ public class AuthControllerTests : IClassFixture<CustomWebApplicationFactory>
         {
             NombreCompleto = "Updated Name",
             Email = "updated@test.com",
-            Telefono = "+999"
+            Telefono = "+999",
+            CurrentPassword = "admin123",
         });
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);

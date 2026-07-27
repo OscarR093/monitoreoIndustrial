@@ -129,9 +129,19 @@ public class ConfiguracionAlarmaController : ControllerBase
                 if (!root.TryGetProperty("smtpHost", out _) || !root.TryGetProperty("smtpPort", out _))
                     return "Configuracion Email requiere 'smtpHost' y 'smtpPort'";
             }
+            else if (tipo == "whatsapp")
+            {
+                if (!root.TryGetProperty("phoneNumberId", out _) || !root.TryGetProperty("accessToken", out _))
+                    return "Configuracion WhatsApp requiere 'phoneNumberId' y 'accessToken'";
+            }
+            else if (tipo == "sms")
+            {
+                if (!root.TryGetProperty("accountSid", out _) || !root.TryGetProperty("authToken", out _) || !root.TryGetProperty("fromNumber", out _))
+                    return "Configuracion SMS requiere 'accountSid', 'authToken' y 'fromNumber'";
+            }
             else
             {
-                return $"Tipo de canal desconocido: '{tipo}'. Valores validos: telegram, email";
+                return $"Tipo de canal desconocido: '{tipo}'. Valores validos: telegram, email, whatsapp, sms";
             }
 
             return null;

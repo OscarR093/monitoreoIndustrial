@@ -379,6 +379,11 @@ function SensorDetailModal({ sensor, valor, history, status, onSensorUpdate, onC
           unidadId,
           unidad: newUnidad || sensor.unidad,
           tipoGraficoId: isDigital ? sensor.tipoGraficoId : tipoGraficoId,
+          alarmaActiva,
+          rangoMinimo: isState ? null : (rangoMin === '' ? null : Number(rangoMin)),
+          rangoMaximo: isState ? null : (rangoMax === '' ? null : Number(rangoMax)),
+          alarmaEnOn: alarmaOn,
+          alarmaEnOff: alarmaOff,
         });
       }
     } catch (err) {

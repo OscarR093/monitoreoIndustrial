@@ -34,7 +34,7 @@ public class UpdateProfileRequest
     public string? NombreCompleto { get; set; }
     public string? Email { get; set; }
     public string? Telefono { get; set; }
-    public string? NuevaPassword { get; set; }
+    public string CurrentPassword { get; set; } = string.Empty;
 }
 
 public class UsuarioDto
@@ -69,4 +69,21 @@ public class AreaUpdateDto
 {
     public string? Nombre { get; set; }
     public string? Alias { get; set; }
+}
+
+public class SendPinRequest
+{
+    public string CurrentPassword { get; set; } = string.Empty;
+}
+
+public class SendPinResponse
+{
+    public bool EmailSent { get; set; }
+    public string? Pin { get; set; }
+}
+
+public class VerifyPinRequest
+{
+    public string Pin { get; set; } = string.Empty;
+    public string NewPassword { get; set; } = string.Empty;
 }
