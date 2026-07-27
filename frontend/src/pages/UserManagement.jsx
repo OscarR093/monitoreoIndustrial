@@ -42,7 +42,7 @@ export default function UserManagement() {
   return (
     <div className="p-6 bg-cyber-black min-h-full">
       <h1 className="font-mono text-xl font-bold text-white flex items-center gap-2">
-        <UsersIcon size={iconSize.header} className="text-cyan-tech" />
+        <UsersIcon size={iconSize.header} className="text-acento" />
         Gestión de Usuarios
       </h1>
 
@@ -54,30 +54,30 @@ export default function UserManagement() {
 
       <form onSubmit={handleCreate} className="mt-6 flex flex-wrap gap-3 rounded-lg border border-gridline bg-panel p-4">
         <input type="text" value={newUser} onChange={(e) => setNewUser(e.target.value)}
-          className="rounded-lg border border-gridline bg-cyber-black px-3 py-2 text-sm text-white placeholder-text-muted focus:border-cyan-tech focus:outline-none"
-          placeholder="Nombre de usuario" required />
+          className="rounded-lg border border-gridline bg-cyber-black px-3 py-2 text-sm text-white placeholder:text-text-muted focus:border-acento focus:outline-none"
+          placeholder="Nombre de usuario" aria-label="Nombre de usuario" required />
         <input type="password" value={newPass} onChange={(e) => setNewPass(e.target.value)}
-          className="rounded-lg border border-gridline bg-cyber-black px-3 py-2 text-sm text-white placeholder-text-muted focus:border-cyan-tech focus:outline-none"
-          placeholder="Contraseña temporal" required />
-        <select value={newRole} onChange={(e) => setNewRole(e.target.value)}
-          className="rounded-lg border border-gridline bg-cyber-black px-3 py-2 text-sm text-white focus:border-cyan-tech focus:outline-none">
+          className="rounded-lg border border-gridline bg-cyber-black px-3 py-2 text-sm text-white placeholder:text-text-muted focus:border-acento focus:outline-none"
+          placeholder="Contraseña temporal" aria-label="Contraseña temporal" required />
+        <select value={newRole} onChange={(e) => setNewRole(e.target.value)} aria-label="Rol del usuario"
+          className="rounded-lg border border-gridline bg-cyber-black px-3 py-2 text-sm text-white focus:border-acento focus:outline-none">
           <option value="viewer">Visualizador</option>
           {canCreateAdmin && <option value="admin">Administrador</option>}
         </select>
         <button type="submit"
-          className="rounded-lg bg-cyan-tech/20 px-4 py-2 text-sm font-semibold text-cyan-tech hover:bg-cyan-tech/30 transition-colors border border-cyan-tech/30">
+          className="rounded-lg bg-acento/20 px-4 py-2 text-sm font-semibold text-acento hover:bg-acento/30 transition-colors border border-acento/30">
           Crear Usuario
         </button>
       </form>
 
       {loading ? (
         <div className="mt-8 flex justify-center">
-          <div className="h-6 w-6 animate-spin rounded-full border-2 border-cyan-tech border-t-transparent" />
+          <div className="h-6 w-6 animate-spin rounded-full border-2 border-acento border-t-transparent" />
         </div>
       ) : users.length === 0 ? (
         <p className="mt-8 text-center text-sm text-text-muted">No se encontraron usuarios</p>
       ) : (
-        <div className="mt-6 overflow-hidden rounded-lg border border-gridline">
+        <div className="mt-6 overflow-x-auto rounded-lg border border-gridline">
           <table className="w-full text-sm">
             <thead className="bg-panel">
               <tr>
@@ -95,8 +95,8 @@ export default function UserManagement() {
                   <td className="px-4 py-3 font-mono text-white">{u.username}</td>
                   <td className="px-4 py-3">
                     <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                      u.rol === 'superadmin' ? 'bg-purple-500/20 text-purple-400' :
-                      u.rol === 'admin' ? 'bg-cyan-tech/20 text-cyan-tech' :
+                      u.rol === 'superadmin' ? 'bg-superadmin/20 text-superadmin' :
+                      u.rol === 'admin' ? 'bg-acento/20 text-acento' :
                       'bg-text-muted/20 text-text-muted'
                     }`}>{roleLabel(u.rol)}</span>
                   </td>
@@ -112,7 +112,7 @@ export default function UserManagement() {
                   <td className="px-4 py-3 text-right">
                     {u.id !== currentUser?.id && (
                       <button onClick={() => handleDelete(u.id)}
-                        className="text-xs text-industrial-red hover:text-red-300">Eliminar</button>
+                        className="text-xs text-industrial-red hover:text-industrial-red/70">Eliminar</button>
                     )}
                   </td>
                 </tr>

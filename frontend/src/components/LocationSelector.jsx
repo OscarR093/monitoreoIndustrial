@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 import { api } from '../services/api';
 import { icons } from '../services/icons';
 import { getAreaDisplayName, getPlantaDisplayName, getAreaIdentifier } from '../services/displayNames';
@@ -8,16 +9,17 @@ const EditIcon = icons.edit;
 const XIcon = icons.close;
 
 export default function LocationSelector({
-  plantas: plantasProp, areas, selectedPlanta, selectedArea,
+  plantas, areas, selectedPlanta, selectedArea,
   onPlantaChange, onAreaChange,
 }) {
   const { user } = useAuth();
+  const showToast = useToast();
   const isAdmin = user?.rol === 'superadmin' || user?.rol === 'admin';
 
-  const [localPlantas, setLocalPlantas] = useState(plantasProp);
+  const [localPlantas, setLocalPlantas] = useState(plantas);
 
-  if (JSON.stringify(localPlantas.map((p) => p.id).sort()) !== JSON.stringify(plantasProp.map((p) => p.id).sort())) {
-    setLocalPlantas(plantasProp);
+  if (JSON.stringify(localPlantas.map((p) => p.id).sort()) !== JSON.stringify(plantas.map((p) => p.id).sort())) {
+    setLocalPlantas(plantas);
   }
 
   const [editingPlantaId, setEditingPlantaId] = useState(null);
@@ -47,7 +49,7 @@ export default function LocationSelector({
       );
       setEditingPlantaId(null);
     } catch (err) {
-      alert(err.message);
+      showToast(err.message);
     }
   };
 
@@ -60,7 +62,7 @@ export default function LocationSelector({
       );
       setEditingAreaId(null);
     } catch (err) {
-      alert(err.message);
+      showToast(err.message);
     }
   };
 
@@ -69,8 +71,9 @@ export default function LocationSelector({
       <span className="text-[10px] uppercase tracking-widest text-text-muted font-semibold">Ubicación</span>
 
       <div className="flex items-center gap-2 rounded border border-gridline bg-cyber-black px-3 py-2">
-        <label className="text-[10px] uppercase tracking-wider text-text-muted font-medium">Planta</label>
+        <label htmlFor="select-planta" className="text-[10px] uppercase tracking-wider text-text-muted font-medium">Planta</label>
         <select
+          id="select-planta"
           value={selectedPlanta}
           onChange={(e) => onPlantaChange(e.target.value)}
           className="bg-transparent text-sm text-white focus:outline-none min-w-[120px]"
@@ -88,24 +91,27 @@ export default function LocationSelector({
                 type="text"
                 value={editPlantaNombre}
                 onChange={(e) => setEditPlantaNombre(e.target.value)}
-                className="w-24 rounded border border-gridline bg-cyber-black px-2 py-1 text-xs text-white focus:border-cyan-tech focus:outline-none"
+                className="w-24 rounded border border-gridline bg-cyber-black px-2 py-1 text-xs text-white placeholder:text-text-muted focus:border-acento focus:outline-none"
                 placeholder="Nombre"
+                aria-label="Nombre de planta"
               />
               <input
                 type="text"
                 value={editPlantaAlias}
                 onChange={(e) => setEditPlantaAlias(e.target.value)}
-                className="w-24 rounded border border-gridline bg-cyber-black px-2 py-1 text-xs text-white focus:border-cyan-tech focus:outline-none"
+                className="w-24 rounded border border-gridline bg-cyber-black px-2 py-1 text-xs text-white placeholder:text-text-muted focus:border-acento focus:outline-none"
                 placeholder="Alias"
+                aria-label="Alias de planta"
               />
-              <button onClick={handleSavePlanta} className="text-cyan-tech hover:text-white"><EditIcon size={14} /></button>
-              <button onClick={() => setEditingPlantaId(null)} className="text-text-muted hover:text-white"><XIcon size={14} /></button>
+              <button onClick={handleSavePlanta} className="text-acento hover:text-white" aria-label="Guardar nombre de planta"><EditIcon size={14} /></button>
+              <button onClick={() => setEditingPlantaId(null)} className="text-text-muted hover:text-white" aria-label="Cancelar edición"><XIcon size={14} /></button>
             </div>
           ) : (
             <button
               onClick={() => { setEditingPlantaId(selectedPlantaObj.id); setEditPlantaNombre(selectedPlantaObj.nombre || ''); setEditPlantaAlias(selectedPlantaObj.alias || ''); }}
-              className="text-text-muted/60 hover:text-cyan-tech transition-colors"
+              className="text-text-muted/60 hover:text-acento transition-colors"
               title="Editar nombre de planta"
+              aria-label="Editar nombre de planta"
             >
               <EditIcon size={14} />
             </button>
@@ -115,8 +121,9 @@ export default function LocationSelector({
 
       {selectedPlanta && (
         <div className="flex items-center gap-2 rounded border border-gridline bg-cyber-black px-3 py-2">
-          <label className="text-[10px] uppercase tracking-wider text-text-muted font-medium">Área</label>
+          <label htmlFor="select-area" className="text-[10px] uppercase tracking-wider text-text-muted font-medium">Área</label>
           <select
+            id="select-area"
             value={selectedArea}
             onChange={(e) => onAreaChange(e.target.value)}
             className="bg-transparent text-sm text-white focus:outline-none min-w-[120px]"
@@ -134,17 +141,19 @@ export default function LocationSelector({
                   type="text"
                   value={editAlias}
                   onChange={(e) => setEditAlias(e.target.value)}
-                  className="w-32 rounded border border-gridline bg-cyber-black px-2 py-1 text-xs text-white focus:border-cyan-tech focus:outline-none"
+                  className="w-32 rounded border border-gridline bg-cyber-black px-2 py-1 text-xs text-white placeholder:text-text-muted focus:border-acento focus:outline-none"
                   placeholder="Alias área"
+                  aria-label="Alias de área"
                 />
-                <button onClick={handleSaveAreaAlias} className="text-cyan-tech hover:text-white"><EditIcon size={14} /></button>
-                <button onClick={() => setEditingAreaId(null)} className="text-text-muted hover:text-white"><XIcon size={14} /></button>
+                <button onClick={handleSaveAreaAlias} className="text-acento hover:text-white" aria-label="Guardar alias de área"><EditIcon size={14} /></button>
+                <button onClick={() => setEditingAreaId(null)} className="text-text-muted hover:text-white" aria-label="Cancelar edición"><XIcon size={14} /></button>
               </div>
             ) : (
-              <button
-                onClick={() => { setEditingAreaId(selectedAreaObj.id); setEditAlias(selectedAreaObj.alias || ''); }}
-                className="text-text-muted/60 hover:text-cyan-tech transition-colors"
-                title={`Editar alias de ${getAreaIdentifier(selectedAreaObj)}`}
+                <button
+                  onClick={() => { setEditingAreaId(selectedAreaObj.id); setEditAlias(selectedAreaObj.alias || ''); }}
+                  className="text-text-muted/60 hover:text-acento transition-colors"
+                  title={`Editar alias de ${getAreaIdentifier(selectedAreaObj)}`}
+                  aria-label="Editar alias de área"
               >
                 <EditIcon size={14} />
               </button>

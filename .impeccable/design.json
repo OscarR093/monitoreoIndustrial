@@ -1,0 +1,209 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-07-27T02:20:00.000Z",
+  "title": "Design System: Monitoreo Industrial",
+  "extensions": {
+    "colorMeta": {
+      "fondo-principal": {
+        "role": "neutral",
+        "displayName": "Fondo Principal",
+        "canonical": "#080C0A",
+        "tonalRamp": [
+          "#040605", "#060907", "#080C0A", "#0B100D",
+          "#0F1411", "#131915", "#181E1A", "#1E2420"
+        ]
+      },
+      "superficie": {
+        "role": "neutral",
+        "displayName": "Superficie",
+        "canonical": "#111714",
+        "tonalRamp": [
+          "#0B0F0D", "#0E1310", "#111714", "#151B18",
+          "#19201C", "#1E2521", "#232B26", "#29312C"
+        ]
+      },
+      "acento-primario": {
+        "role": "primary",
+        "displayName": "Acento Primario",
+        "canonical": "#F59E0B",
+        "tonalRamp": [
+          "#3D2702", "#7A4E04", "#B87606", "#E08F08",
+          "#F59E0B", "#F7B13C", "#F9C56D", "#FBD89E"
+        ]
+      },
+      "estado-normal": {
+        "role": "semantic",
+        "displayName": "Estado Normal",
+        "canonical": "#22C55E",
+        "tonalRamp": [
+          "#083117", "#11632E", "#199445", "#1FB152",
+          "#22C55E", "#4ED07E", "#7ADC9E", "#A7E9BF"
+        ]
+      },
+      "advertencia": {
+        "role": "semantic",
+        "displayName": "Advertencia",
+        "canonical": "#EA580C",
+        "tonalRamp": [
+          "#3A1603", "#752C06", "#AF4209", "#D44F0B",
+          "#EA580C", "#EE793D", "#F29B6E", "#F6BC9F"
+        ]
+      },
+      "estado-critico": {
+        "role": "semantic",
+        "displayName": "Estado Crítico",
+        "canonical": "#DC2626",
+        "tonalRamp": [
+          "#370909", "#6E1313", "#A51C1C", "#C82121",
+          "#DC2626", "#E35151", "#EA7D7D", "#F1A8A8"
+        ]
+      },
+      "linea-divisoria": {
+        "role": "neutral",
+        "displayName": "Línea Divisoria",
+        "canonical": "#1A1F1C",
+        "tonalRamp": [
+          "#111412", "#151916", "#1A1F1C", "#202622",
+          "#272D29", "#2E3530", "#363D38", "#3F4741"
+        ]
+      },
+      "texto-secundario": {
+        "role": "neutral",
+        "displayName": "Texto Secundario",
+        "canonical": "#787C7A",
+        "tonalRamp": [
+          "#4B4E4C", "#5B5E5D", "#6C6F6E", "#787C7A",
+          "#8A8D8C", "#9C9F9E", "#AFB1B0", "#C2C4C3"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "datos": {
+        "displayName": "Datos (Monospace)",
+        "purpose": "Valores de sensor, identificadores, timestamps, unidades técnicas."
+      },
+      "interfaz": {
+        "displayName": "Interfaz (Sans-serif)",
+        "purpose": "Etiquetas, botones, navegación, títulos de sección."
+      }
+    },
+    "shadows": [],
+    "motion": [
+      {
+        "name": "precision-150",
+        "value": "150ms ease",
+        "purpose": "Transición estándar para cambios de color en botones, inputs, bordes y hover states."
+      },
+      {
+        "name": "layout-200",
+        "value": "200ms ease",
+        "purpose": "Transición para cambios de layout (sidebar expand/colapse)."
+      }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "lg", "value": "1024px" },
+      { "name": "xl", "value": "1280px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Botón Primario Inactivo",
+      "kind": "button",
+      "refersTo": "boton-primario-inactivo",
+      "description": "Acción secundaria con peso visual de botón. Fondo ámbar translúcido.",
+      "html": "<button class=\"ds-btn-primary-inactive\">GUARDAR</button>",
+      "css": ".ds-btn-primary-inactive { background: rgba(245, 158, 11, 0.2); color: #F59E0B; padding: 8px 16px; border-radius: 8px; border: 1px solid rgba(245, 158, 11, 0.3); font-family: ui-sans-serif, system-ui, sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; transition: background-color 0.15s ease; } .ds-btn-primary-inactive:hover { background: rgba(245, 158, 11, 0.3); } .ds-btn-primary-inactive:disabled { opacity: 0.5; cursor: default; } .ds-btn-primary-inactive:focus-visible { outline: 1px solid #F59E0B; outline-offset: 0; }"
+    },
+    {
+      "name": "Botón Primario Sólido",
+      "kind": "button",
+      "refersTo": "boton-primario",
+      "description": "Acción principal de la vista. Fondo ámbar sólido, texto casi negro.",
+      "html": "<button class=\"ds-btn-primary-solid\">INICIAR SESIÓN</button>",
+      "css": ".ds-btn-primary-solid { background: #F59E0B; color: #080C0A; padding: 8px 16px; border-radius: 8px; border: none; font-family: ui-sans-serif, system-ui, sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; transition: background-color 0.15s ease; } .ds-btn-primary-solid:hover { background: rgba(245, 158, 11, 0.9); } .ds-btn-primary-solid:disabled { opacity: 0.5; cursor: default; } .ds-btn-primary-solid:focus-visible { outline: 1px solid #F59E0B; outline-offset: 0; }"
+    },
+    {
+      "name": "Tarjeta de Sensor",
+      "kind": "card",
+      "refersTo": "tarjeta-sensor",
+      "description": "Tarjeta con barra de estado semántica y valor monospace.",
+      "html": "<div class=\"ds-card-sensor\"><span class=\"ds-card-sensor-value\">247.5</span><span class=\"ds-card-sensor-unit\">°C</span></div>",
+      "css": ".ds-card-sensor { background: #111714; border: 1px solid #1A1F1C; border-left: 4px solid #22C55E; border-radius: 8px; padding: 16px; min-height: 260px; cursor: pointer; transition: border-color 0.15s ease; position: relative; display: flex; flex-direction: column; } .ds-card-sensor:hover { border-color: rgba(245, 158, 11, 0.3); } .ds-card-sensor-value { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 28px; font-weight: 700; color: white; line-height: 1.2; } .ds-card-sensor-unit { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 12px; color: #787C7A; margin-left: 4px; }"
+    },
+    {
+      "name": "Campo de Texto Estándar",
+      "kind": "input",
+      "refersTo": "campo-texto",
+      "description": "Input de formulario. Borde preciso (4px), foco ámbar.",
+      "html": "<input class=\"ds-input-standard\" type=\"text\" placeholder=\"Buscar...\" />",
+      "css": ".ds-input-standard { width: 100%; background: #080C0A; color: white; border: 1px solid #1A1F1C; border-radius: 4px; padding: 4px 8px; font-family: ui-sans-serif, system-ui, sans-serif; font-size: 12px; transition: border-color 0.15s ease; } .ds-input-standard::placeholder { color: #787C7A; } .ds-input-standard:focus { border-color: #F59E0B; outline: none; }"
+    },
+    {
+      "name": "Campo de Texto Autenticación",
+      "kind": "input",
+      "refersTo": "campo-texto-autenticacion",
+      "description": "Input con anillo de foco. Solo Login y CompleteProfile.",
+      "html": "<input class=\"ds-input-auth\" type=\"text\" placeholder=\"Usuario\" />",
+      "css": ".ds-input-auth { width: 100%; background: #080C0A; color: white; border: 1px solid #1A1F1C; border-radius: 8px; padding: 8px 12px; font-family: ui-sans-serif, system-ui, sans-serif; font-size: 14px; transition: border-color 0.15s ease; } .ds-input-auth::placeholder { color: #787C7A; } .ds-input-auth:focus { border-color: #F59E0B; outline: none; box-shadow: 0 0 0 1px #F59E0B; }"
+    },
+    {
+      "name": "Ítem de Navegación Activo",
+      "kind": "nav",
+      "refersTo": null,
+      "description": "Enlace activo en sidebar con acento ámbar.",
+      "html": "<a class=\"ds-nav-active\"><svg class=\"ds-nav-icon\" viewBox=\"0 0 24 24\" width=\"20\" height=\"20\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><rect x=\"3\" y=\"3\" width=\"18\" height=\"18\" rx=\"2\"/></svg><span>Dashboard</span></a>",
+      "css": ".ds-nav-active { display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: rgba(245, 158, 11, 0.1); color: #F59E0B; border-left: 2px solid #F59E0B; font-family: ui-sans-serif, system-ui, sans-serif; font-size: 14px; font-weight: 600; text-decoration: none; transition: background-color 0.15s ease; } .ds-nav-active:hover { background: rgba(245, 158, 11, 0.15); } .ds-nav-icon { stroke: #F59E0B; }"
+    },
+    {
+      "name": "Badge de Estado Conectado",
+      "kind": "custom",
+      "refersTo": null,
+      "description": "Indicador de estado de conexión. Verde militar, monospace, uppercase.",
+      "html": "<span class=\"ds-badge-connected\">CONECTADO</span>",
+      "css": ".ds-badge-connected { display: inline-flex; align-items: center; border-radius: 9999px; padding: 4px 12px; background: rgba(34, 197, 94, 0.1); color: #22C55E; border: 1px solid rgba(34, 197, 94, 0.3); font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 10px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; }"
+    },
+    {
+      "name": "Indicador LED ON",
+      "kind": "custom",
+      "refersTo": null,
+      "description": "Indicador luminoso para sensor digital. Verde militar.",
+      "html": "<div class=\"ds-led-on\"></div>",
+      "css": ".ds-led-on { width: 12px; height: 12px; border-radius: 9999px; border: 4px solid #22C55E; background: rgba(34, 197, 94, 0.2); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "La Sala de Control",
+    "overview": "El dashboard encarna la precisión y legibilidad absoluta de una sala de control industrial. La paleta se inspira en la instrumentación clásica: ámbar de display de osciloscopio, verde de LED de panel, rojo de piloto de fallo. El estado normal se transmite con silencio visual (verde, estable); la excepción (naranja, rojo) irrumpe con autoridad pero sin histrionismo.",
+    "keyCharacteristics": [
+      "Legibilidad absoluta: monospace para datos, sans-serif para interfaz",
+      "Profundidad por capas tonales, cero sombras",
+      "Paleta ámbar industrial: 8 colores inspirados en instrumentación Fluke/Tektronix",
+      "Componentes con respuesta instantánea (150ms), sin animaciones superfluas",
+      "Densidad de información alta, espacios generosos solo entre zonas lógicas"
+    ],
+    "rules": [
+      { "name": "La Regla del Silencio Visual", "body": "El verde debe dominar la superficie visible. Si el naranja o el rojo ocupan más del 15% del área, el diseño está fallando.", "section": "colors" },
+      { "name": "La Regla del Acento Único", "body": "Solo el Acento Primario (ámbar) indica interactividad. El naranja de Advertencia señala estado del sistema, no interacción.", "section": "colors" },
+      { "name": "La Regla de las Dos Voces", "body": "Monospace = dato del sistema. Sans-serif = acción del usuario. Nunca se mezclan.", "section": "typography" },
+      { "name": "La Regla del Relieve Ausente", "body": "Ningún componente proyecta sombra. La elevación es diferencia de luminosidad entre fondos.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do usar monospace para valores, IDs, timestamps y unidades.",
+      "Do usar sans-serif para etiquetas, botones, títulos y navegación.",
+      "Do construir profundidad solo con capas tonales.",
+      "Do usar ámbar solo para elementos interactivos o en foco.",
+      "Do mantener transiciones en 150ms; 200ms solo para layout."
+    ],
+    "donts": [
+      "Don't usar sombras (box-shadow) en ningún componente.",
+      "Don't mezclar monospace y sans-serif en un mismo elemento.",
+      "Don't usar más de 8 colores en toda la interfaz.",
+      "Don't añadir animaciones que no comuniquen cambio de estado.",
+      "Don't usar ámbar para valores de sensor o datos.",
+      "Don't usar bordes redondeados mayores a 12px fuera de modales.",
+      "Don't mostrar texto de datos a menos de 10px.",
+      "Don't usar gradientes como fondo de componentes."
+    ]
+  }
+}

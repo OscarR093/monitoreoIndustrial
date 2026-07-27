@@ -33,12 +33,13 @@ export default function Sidebar() {
   const isActive = (path) => location.pathname === path;
 
   return (
-    <aside className={`${open ? 'w-52' : 'w-14'} flex flex-col bg-panel transition-all duration-200 border-r-2 border-cyan-tech/10`}>
-      <div className="flex items-center justify-between px-3 py-3.5 border-b-2 border-cyan-tech/10">
-        {open && <span className="font-mono text-sm font-black text-cyan-tech tracking-[0.15em]">SCADA</span>}
+    <aside className={`${open ? 'w-52' : 'w-14'} flex flex-col bg-panel transition-all duration-200 border-r-2 border-acento/10`}>
+      <div className="flex items-center justify-between px-3 py-3.5 border-b-2 border-acento/10">
+        {open && <h1 className="font-mono text-sm font-black text-acento tracking-[0.15em]">SCADA</h1>}
         <button
           onClick={() => setOpen(!open)}
-          className="rounded p-1 text-text-muted hover:bg-cyber-black hover:text-cyan-tech transition-colors"
+          className="rounded p-1 min-w-[32px] min-h-[32px] flex items-center justify-center text-text-muted hover:bg-cyber-black hover:text-acento transition-colors"
+          aria-label={open ? 'Colapsar menú' : 'Expandir menú'}
         >
           {open ? <ChevronLeftIcon size={iconSize.inline} /> : <MenuIcon size={iconSize.inline} />}
         </button>
@@ -50,7 +51,7 @@ export default function Sidebar() {
         </div>
 
         <Link to="/" className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors ${
-          isActive('/') ? 'bg-cyan-tech/10 text-cyan-tech border-l-2 border-cyan-tech' : 'text-text-muted hover:bg-cyber-black hover:text-white border-l-2 border-transparent'
+          isActive('/') ? 'bg-acento/10 text-acento border-l-2 border-acento' : 'text-text-muted hover:bg-cyber-black hover:text-white border-l-2 border-transparent'
         } ${!open && 'justify-center border-l-0'}`}>
           <DashboardIcon size={iconSize.nav} />
           {open && 'Dashboard'}
@@ -58,7 +59,7 @@ export default function Sidebar() {
 
         {isElevated && (
           <Link to="/users" className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors ${
-            isActive('/users') ? 'bg-cyan-tech/10 text-cyan-tech border-l-2 border-cyan-tech' : 'text-text-muted hover:bg-cyber-black hover:text-white border-l-2 border-transparent'
+            isActive('/users') ? 'bg-acento/10 text-acento border-l-2 border-acento' : 'text-text-muted hover:bg-cyber-black hover:text-white border-l-2 border-transparent'
           } ${!open && 'justify-center border-l-0'}`}>
             <UsersIcon size={iconSize.nav} />
             {open && 'Usuarios'}
@@ -66,18 +67,18 @@ export default function Sidebar() {
         )}
 
         <Link to="/settings" className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors ${
-          isActive('/settings') ? 'bg-cyan-tech/10 text-cyan-tech border-l-2 border-cyan-tech' : 'text-text-muted hover:bg-cyber-black hover:text-white border-l-2 border-transparent'
+          isActive('/settings') ? 'bg-acento/10 text-acento border-l-2 border-acento' : 'text-text-muted hover:bg-cyber-black hover:text-white border-l-2 border-transparent'
         } ${!open && 'justify-center border-l-0'}`}>
           <SettingsIcon size={iconSize.nav} />
           {open && 'Configuración'}
         </Link>
       </nav>
 
-      <div className="border-t-2 border-cyan-tech/10 p-3">
+      <div className="border-t-2 border-acento/10 p-3">
         <div className={`flex items-center gap-2.5 ${!open && 'justify-center'}`}>
           <div className={`h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold ${
-            user?.rol === 'superadmin' ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30' :
-            user?.rol === 'admin' ? 'bg-cyan-tech/20 text-cyan-tech border border-cyan-tech/30' :
+            user?.rol === 'superadmin' ? 'bg-superadmin/20 text-superadmin border border-superadmin/30' :
+            user?.rol === 'admin' ? 'bg-acento/20 text-acento border border-acento/30' :
             'bg-text-muted/20 text-text-muted border border-text-muted/30'
           }`}>
             {user?.username?.[0]?.toUpperCase()}

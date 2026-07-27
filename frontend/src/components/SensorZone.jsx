@@ -13,7 +13,7 @@ const ZONE_ICONS = {
   'General': icons.settings,
 };
 
-export default function SensorZone({ name, sensores, realtimeData, storageKey, forceExpand, forceCollapse, onSensorUpdate }) {
+export default function SensorZone({ name, sensores, realtimeData, lastSeen, storageKey, forceExpand, forceCollapse, onSensorUpdate }) {
   const [collapsed, setCollapsed] = useState(() => {
     try { return localStorage.getItem(storageKey) === 'true'; }
     catch { return false; }
@@ -39,10 +39,10 @@ export default function SensorZone({ name, sensores, realtimeData, storageKey, f
     <div className="mb-5">
       <button
         onClick={() => setCollapsed(!collapsed)}
-        className="flex items-center gap-3 w-full rounded-t-lg border border-gridline bg-panel px-4 py-2.5 hover:border-cyan-tech/30 transition-colors group"
+        className="flex items-center gap-3 w-full rounded-t-lg border border-gridline bg-panel px-4 py-2.5 hover:border-acento/30 transition-colors group"
       >
-        <ZoneIcon size={16} className="text-cyan-tech/70 group-hover:text-cyan-tech transition-colors" />
-        <span className="text-sm font-semibold text-white uppercase tracking-wider">{name}</span>
+        <ZoneIcon size={16} className="text-acento/70 group-hover:text-acento transition-colors" />
+        <h2 className="text-sm font-semibold text-white uppercase tracking-wider">{name}</h2>
         <span className="text-[10px] text-text-muted ml-auto font-mono">
           {activeCount}/{sensores.length} activos
         </span>
@@ -53,7 +53,7 @@ export default function SensorZone({ name, sensores, realtimeData, storageKey, f
         <div className="border-l border-r border-b border-gridline rounded-b-lg bg-cyber-black/30 p-3">
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {sensores.map((s) => (
-              <SensorCard key={s.id} sensor={s} valor={realtimeData[s.sensorId]} onSensorUpdate={onSensorUpdate} />
+              <SensorCard key={s.id} sensor={s} valor={realtimeData[s.sensorId]} lastSeen={lastSeen[s.sensorId]} onSensorUpdate={onSensorUpdate} />
             ))}
           </div>
         </div>

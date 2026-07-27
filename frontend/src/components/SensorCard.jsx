@@ -4,10 +4,12 @@ import { api } from '../services/api';
 import { icons, iconSize } from '../services/icons';
 import { useAuth } from '../context/AuthContext';
 import { getSensorDisplayName, getSensorIdentifier } from '../services/displayNames';
+import { useToast } from '../context/ToastContext';
+
+const CHART_COLORS = { accent: '#F59E0B', muted: '#787C7A', deadZone: '#1A1F1C' };
 
 const ActivityIcon = icons.activity;
 const GaugeIcon = icons.gauge;
-const ThermometerIcon = icons.temperature;
 const ZapIcon = icons.voltage;
 const XIcon = icons.close;
 const EditIcon = icons.edit;
@@ -21,13 +23,13 @@ function Sparkline({ data }) {
       <AreaChart data={data} margin={{ top: 8, right: 8, bottom: 8, left: 0 }}>
         <defs>
           <linearGradient id="colorValor" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor="#00E5FF" stopOpacity={0.3}/>
-            <stop offset="95%" stopColor="#00E5FF" stopOpacity={0}/>
+            <stop offset="5%" stopColor={CHART_COLORS.accent} stopOpacity={0.3}/>
+            <stop offset="95%" stopColor={CHART_COLORS.accent} stopOpacity={0}/>
           </linearGradient>
         </defs>
         <XAxis dataKey="timestamp" hide />
-        <YAxis domain={['auto', 'auto']} tick={{ fill: '#78909C', fontSize: 10 }} axisLine={false} tickLine={false} width={30} />
-        <Area type="monotone" dataKey="valor" stroke="#00E5FF" strokeWidth={2} fillOpacity={1} fill="url(#colorValor)" dot={false} />
+        <YAxis domain={['auto', 'auto']} tick={{ fill: CHART_COLORS.muted, fontSize: 10 }} axisLine={false} tickLine={false} width={30} />
+        <Area type="monotone" dataKey="valor" stroke={CHART_COLORS.accent} strokeWidth={2} fillOpacity={1} fill="url(#colorValor)" dot={false} />
       </AreaChart>
     </ResponsiveContainer>
   );
@@ -43,8 +45,8 @@ function MiniGauge({ value, max }) {
     <ResponsiveContainer width="100%" height="100%">
       <PieChart>
         <Pie data={data} cx="50%" cy="50%" innerRadius={40} outerRadius={58} startAngle={90} endAngle={-270} dataKey="value" stroke="none">
-          <Cell fill="#00E5FF" />
-          <Cell fill="#1A2433" />
+          <Cell fill={CHART_COLORS.accent} />
+          <Cell fill={CHART_COLORS.deadZone} />
         </Pie>
       </PieChart>
     </ResponsiveContainer>
@@ -59,8 +61,8 @@ function MiniBar({ data }) {
     <ResponsiveContainer width="100%" height="100%">
       <BarChart data={data} margin={{ top: 8, right: 8, bottom: 8, left: 0 }}>
         <XAxis dataKey="timestamp" hide />
-        <YAxis domain={['auto', 'auto']} tick={{ fill: '#78909C', fontSize: 10 }} axisLine={false} tickLine={false} width={30} />
-        <Bar dataKey="valor" fill="#00E5FF" radius={[2, 2, 0, 0]} maxBarSize={24} />
+        <YAxis domain={['auto', 'auto']} tick={{ fill: CHART_COLORS.muted, fontSize: 10 }} axisLine={false} tickLine={false} width={30} />
+        <Bar dataKey="valor" fill={CHART_COLORS.accent} radius={[2, 2, 0, 0]} maxBarSize={24} />
       </BarChart>
     </ResponsiveContainer>
   );
@@ -90,7 +92,7 @@ function CounterWidget({ value, unidad, delta }) {
       </span>
       <span className="text-xs text-text-muted font-medium">{unidad || 'ud'}</span>
       {delta != null && delta > 0 && (
-        <span className="text-[11px] font-mono text-cyan-tech">+{delta} en periodo</span>
+        <span className="text-[11px] font-mono text-acento">+{delta} en periodo</span>
       )}
     </div>
   );
@@ -98,11 +100,19 @@ function CounterWidget({ value, unidad, delta }) {
 
 const STATUS = {
   normal: 'border-l-industrial-green',
-  warning: 'border-l-industrial-amber border-amber-500/20',
+  warning: 'border-l-industrial-amber bg-industrial-amber/[0.06]',
 };
 
-export default function SensorCard({ sensor, valor, onSensorUpdate }) {
+export default function SensorCard({ sensor, valor, lastSeen, onSensorUpdate }) {
   const { user } = useAuth();
+  const showToast = useToast();
+  const isAdmin = user?.rol === 'superadmin' || user?.rol === 'admin';
+  const STALE_THRESHOLD = 6000;
+  const isStale = lastSeen ? Date.now() - lastSeen > STALE_THRESHOLD : true;
+  const staleLabel = lastSeen ? (() => {
+    const s = Math.floor((Date.now() - lastSeen) / 1000);
+    return s < 60 ? `hace ${s}s` : `hace ${Math.floor(s / 60)}m`;
+  })() : 'sin datos';
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
@@ -111,7 +121,6 @@ export default function SensorCard({ sensor, valor, onSensorUpdate }) {
   const [displayAlias, setDisplayAlias] = useState(sensor.alias || '');
   const [saving, setSaving] = useState(false);
 
-  const isAdmin = user?.rol === 'superadmin' || user?.rol === 'admin';
   const isDigital = sensor.tipoDato === 'digital';
   const isCounter = isDigital && sensor.modoDigital === 'contador';
   const isState = isDigital && !isCounter;
@@ -162,7 +171,7 @@ export default function SensorCard({ sensor, valor, onSensorUpdate }) {
       setDisplayAlias(editAlias.trim());
       setIsEditing(false);
     } catch (err) {
-      alert(err.message);
+      showToast(err.message);
     } finally {
       setSaving(false);
     }
@@ -179,8 +188,11 @@ export default function SensorCard({ sensor, valor, onSensorUpdate }) {
   return (
     <>
       <div
+        role="button"
+        tabIndex={0}
         onClick={() => !isEditing && setIsOpen(true)}
-        className={`relative flex flex-col rounded-lg border-l-4 ${STATUS[status]} bg-panel p-4 shadow-lg hover:shadow-xl transition-all cursor-pointer border border-gridline hover:border-cyan-tech/30 group min-h-[260px]`}
+        onKeyDown={(e) => { if ((e.key === 'Enter' || e.key === ' ') && !isEditing) { e.preventDefault(); setIsOpen(true); } }}
+        className={`relative flex flex-col rounded-lg border-l-4 ${STATUS[status]} bg-panel p-4 transition-all cursor-pointer border border-gridline hover:border-acento/30 group min-h-[260px] ${isStale ? 'opacity-60' : ''}`}
       >
         <div className="flex items-center justify-between mb-1.5 gap-2">
           {isEditing ? (
@@ -189,27 +201,29 @@ export default function SensorCard({ sensor, valor, onSensorUpdate }) {
                 type="text"
                 value={editAlias}
                 onChange={(e) => setEditAlias(e.target.value)}
-                className="flex-1 rounded border border-gridline bg-cyber-black px-2 py-1 text-xs text-white focus:border-cyan-tech focus:outline-none"
+                className="flex-1 rounded border border-gridline bg-cyber-black px-2 py-1 text-xs text-white placeholder:text-text-muted focus:border-acento focus:outline-none"
                 placeholder="Alias del sensor"
+                aria-label="Alias del sensor"
                 disabled={saving}
               />
-              <button onClick={handleSaveAlias} disabled={saving} className="text-cyan-tech hover:text-white">
+              <button onClick={handleSaveAlias} disabled={saving} className="text-acento hover:text-white" aria-label="Guardar alias">
                 <EditIcon size={14} />
               </button>
-              <button onClick={handleCancel} disabled={saving} className="text-text-muted hover:text-white">
+              <button onClick={handleCancel} disabled={saving} className="text-text-muted hover:text-white" aria-label="Cancelar edición">
                 <XIcon size={14} />
               </button>
             </div>
           ) : (
             <>
-              <span className="truncate text-xs font-semibold text-white" title={getSensorIdentifier(sensorWithAlias)}>{getSensorDisplayName(sensorWithAlias)}</span>
-              {isCounter && <span className="text-[10px] px-1.5 py-0.5 rounded bg-green-500/20 text-green-400 font-mono">CONT</span>}
-              {isState && <span className="text-[10px] px-1.5 py-0.5 rounded bg-cyan-tech/20 text-cyan-tech font-mono">DIG</span>}
+              <h3 className="truncate text-xs font-semibold text-white" title={getSensorIdentifier(sensorWithAlias)}>{getSensorDisplayName(sensorWithAlias)}</h3>
+              {isCounter && <span className="text-[10px] px-1.5 py-0.5 rounded bg-industrial-green/20 text-industrial-green font-mono">CONT</span>}
+              {isState && <span className="text-[10px] px-1.5 py-0.5 rounded bg-acento/20 text-acento font-mono">DIG</span>}
               {isAdmin && (
                 <button
                   onClick={(e) => { e.stopPropagation(); setIsEditing(true); }}
-                  className="shrink-0 text-text-muted/60 hover:text-cyan-tech transition-colors"
+                  className="shrink-0 text-text-muted/60 hover:text-acento transition-colors"
                   title="Editar alias"
+                  aria-label="Editar alias"
                 >
                   <EditIcon size={14} />
                 </button>
@@ -219,8 +233,8 @@ export default function SensorCard({ sensor, valor, onSensorUpdate }) {
           {!isDigital && tipoId === 1 && <ActivityIcon size={12} className="text-text-muted/40 shrink-0" />}
           {!isDigital && tipoId === 2 && <GaugeIcon size={12} className="text-text-muted/40 shrink-0" />}
           {!isDigital && tipoId === 3 && <ActivityIcon size={12} className="text-text-muted/40 shrink-0" />}
-          {isState && <ZapIcon size={12} className="text-cyan-tech/60 shrink-0" />}
-          {isCounter && <ZapIcon size={12} className="text-green-400/60 shrink-0" />}
+          {isState && <ZapIcon size={12} className="text-acento/60 shrink-0" />}
+          {isCounter && <ZapIcon size={12} className="text-industrial-green/60 shrink-0" />}
         </div>
 
       <div className="flex items-baseline gap-1.5">
@@ -257,13 +271,14 @@ export default function SensorCard({ sensor, valor, onSensorUpdate }) {
         {!loading && isCounter && <CounterWidget value={valor} unidad={sensor.unidad?.simbolo || 'ud'} delta={history.length > 0 ? history[history.length - 1].cambios : null} />}
       </div>
 
-      <div className="mt-2 pt-2 border-t border-gridline/50">
+      <div className="mt-2 pt-2 border-t border-gridline/50 flex items-center justify-between">
         <p className="truncate text-[11px] text-text-muted font-mono" title={sensor.nombre}>{getSensorIdentifier(sensorWithAlias)}</p>
+        {isStale && <span className="shrink-0 text-[10px] text-industrial-amber/70 font-mono ml-2">{staleLabel}</span>}
       </div>
 
       <div className={`absolute bottom-0 left-0 right-0 h-0.5 rounded-b-lg ${
         status === 'warning' ? 'bg-industrial-amber' : 'bg-industrial-green/50'
-      }`} />
+      }`} aria-label={status === 'warning' ? 'Advertencia' : 'Normal'} />
     </div>
 
     {isOpen && <SensorDetailModal sensor={sensorWithAlias} valor={valor} history={history} status={status} onSensorUpdate={onSensorUpdate} onClose={() => setIsOpen(false)} />}
@@ -301,6 +316,7 @@ function SensorDetailModal({ sensor, valor, history, status, onSensorUpdate, onC
   const [showNewUnidad, setShowNewUnidad] = useState(false);
   const [newUnidadNombre, setNewUnidadNombre] = useState('');
   const [newUnidadSimbolo, setNewUnidadSimbolo] = useState('');
+  const [pendingAlarmaOff, setPendingAlarmaOff] = useState(false);
 
   const loadUnidades = () => {
     api.get('/api/unidades').then(setUnidades).catch(() => {});
@@ -324,7 +340,7 @@ function SensorDetailModal({ sensor, valor, history, status, onSensorUpdate, onC
       setNewUnidadNombre('');
       setNewUnidadSimbolo('');
     } catch (err) {
-      alert(err.message);
+      showToast(err.message);
     }
   };
 
@@ -387,21 +403,21 @@ function SensorDetailModal({ sensor, valor, history, status, onSensorUpdate, onC
         });
       }
     } catch (err) {
-      alert(err.message);
+      showToast(err.message);
     } finally {
       setSavingAlarm(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" onClick={onClose}>
-      <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-xl border border-gridline bg-panel p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" role="dialog" onClick={onClose} onKeyDown={(e) => e.key === 'Escape' && onClose()}>
+      <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-xl border border-gridline bg-panel p-6" aria-labelledby="modal-title" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h2 className="font-mono text-lg font-bold text-white">{getSensorDisplayName(sensor)}</h2>
+            <h2 id="modal-title" className="font-mono text-lg font-bold text-white">{getSensorDisplayName(sensor)}</h2>
             <p className="text-xs text-text-muted font-mono">{getSensorIdentifier(sensor)} · {sensor.unidad?.nombre} ({sensor.unidad?.simbolo}) · {sensor.tipoDato}</p>
           </div>
-          <button onClick={onClose} className="rounded p-1 text-text-muted hover:bg-cyber-black hover:text-white transition-colors">
+          <button onClick={onClose} className="rounded p-1 min-w-[32px] min-h-[32px] flex items-center justify-center text-text-muted hover:bg-cyber-black hover:text-white transition-colors" aria-label="Cerrar">
             <XIcon size={20} />
           </button>
         </div>
@@ -409,7 +425,7 @@ function SensorDetailModal({ sensor, valor, history, status, onSensorUpdate, onC
         <div className="grid grid-cols-3 gap-3 mb-4">
           <div className="rounded-lg border border-gridline bg-cyber-black p-3">
             <p className="text-[10px] uppercase tracking-wider text-text-muted">Actual</p>
-            <p className={`font-mono text-xl font-bold ${status === 'warning' ? 'text-industrial-amber' : 'text-cyan-tech'}`}>
+            <p className={`font-mono text-xl font-bold ${status === 'warning' ? 'text-industrial-amber' : 'text-acento'}`}>
               {isState ? (valor === 1 ? 'ON' : valor === 0 ? 'OFF' : '--') : isCounter ? (valor != null ? valor.toLocaleString() : '--') : (valor != null ? valor.toFixed(1) : '--')}
               {!isState && <span className="text-xs text-text-muted"> {sensor.unidad?.simbolo}</span>}
             </p>
@@ -426,14 +442,67 @@ function SensorDetailModal({ sensor, valor, history, status, onSensorUpdate, onC
           </div>
         </div>
 
+        <div className="rounded-lg border border-gridline bg-cyber-black p-4 mb-4">
+          <h3 className="text-sm font-semibold text-white mb-3">Configuración de Alarma</h3>
+          <div className="flex items-center gap-2 mb-3">
+            <label htmlFor="alarma-activa" className="text-xs text-text-muted">Alarma activa</label>
+            <input id="alarma-activa" type="checkbox" checked={alarmaActiva} onChange={(e) => {
+              if (!e.target.checked && sensor.alarmaActiva) {
+                setPendingAlarmaOff(true);
+              } else {
+                setAlarmaActiva(e.target.checked);
+                setPendingAlarmaOff(false);
+              }
+            }} disabled={!isAdmin || savingAlarm} className="accent-acento" />
+          </div>
+          {pendingAlarmaOff && (
+            <div className="mb-3 rounded border border-industrial-amber/30 bg-industrial-amber/10 px-3 py-2 text-xs text-industrial-amber">
+              ¿Desactivar la alarma para este sensor? No recibirá notificaciones.
+              <div className="flex gap-2 mt-1.5">
+                <button onClick={() => { setAlarmaActiva(false); setPendingAlarmaOff(false); }} className="text-industrial-red hover:text-red-300 font-medium">Sí, desactivar</button>
+                <button onClick={() => setPendingAlarmaOff(false)} className="text-text-muted hover:text-white">Cancelar</button>
+              </div>
+            </div>
+          )}
+          {isState ? (
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <input id="alarma-on" type="checkbox" checked={alarmaOn} onChange={(e) => { setAlarmaOn(e.target.checked); if (e.target.checked) setAlarmaOff(false); }} disabled={!isAdmin || savingAlarm} className="accent-acento" />
+                <label htmlFor="alarma-on" className="text-xs text-text-muted">Alarma en ON (valor = 1)</label>
+              </div>
+              <div className="flex items-center gap-2">
+                <input id="alarma-off" type="checkbox" checked={alarmaOff} onChange={(e) => { setAlarmaEnOff(e.target.checked); if (e.target.checked) setAlarmaOn(false); }} disabled={!isAdmin || savingAlarm} className="accent-acento" />
+                <label htmlFor="alarma-off" className="text-xs text-text-muted">Alarma en OFF (valor = 0)</label>
+              </div>
+            </div>
+          ) : (
+            <div className="flex gap-4">
+              <div className="flex-1">
+                <label className="text-[10px] uppercase tracking-wider text-text-muted block mb-1">Rango mínimo</label>
+                <input type="number" value={rangoMin} onChange={(e) => setRangoMin(e.target.value)} disabled={!isAdmin || savingAlarm} className="w-full rounded border border-gridline bg-cyber-black px-2 py-1 text-xs text-white placeholder:text-text-muted focus:border-acento focus:outline-none" placeholder="Sin límite" />
+              </div>
+              <div className="flex-1">
+                <label className="text-[10px] uppercase tracking-wider text-text-muted block mb-1">Rango máximo</label>
+                <input type="number" value={rangoMax} onChange={(e) => setRangoMax(e.target.value)} disabled={!isAdmin || savingAlarm} className="w-full rounded border border-gridline bg-cyber-black px-2 py-1 text-xs text-white placeholder:text-text-muted focus:border-acento focus:outline-none" placeholder="Sin límite" />
+              </div>
+            </div>
+          )}
+        </div>
+
+        {isAdmin && (
+          <button onClick={handleSaveAlarm} disabled={savingAlarm} className="w-full rounded bg-acento/20 px-4 py-2 text-sm text-acento hover:bg-acento/30 disabled:opacity-50 mb-4">
+            {savingAlarm ? 'Guardando...' : 'Guardar configuración'}
+          </button>
+        )}
+
         <div className="mb-4 flex gap-2 items-end">
           <div className="flex-1">
-            <label className="text-[10px] uppercase tracking-wider text-text-muted block mb-1">Desde</label>
-            <input type="datetime-local" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="w-full rounded border border-gridline bg-cyber-black px-2 py-1 text-xs text-white focus:border-cyan-tech focus:outline-none" />
+            <label htmlFor="date-from" className="text-[10px] uppercase tracking-wider text-text-muted block mb-1">Desde</label>
+            <input id="date-from" type="datetime-local" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} aria-label="Fecha desde" className="w-full rounded border border-gridline bg-cyber-black px-2 py-1 text-xs text-white placeholder:text-text-muted focus:border-acento focus:outline-none" />
           </div>
           <div className="flex-1">
-            <label className="text-[10px] uppercase tracking-wider text-text-muted block mb-1">Hasta</label>
-            <input type="datetime-local" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="w-full rounded border border-gridline bg-cyber-black px-2 py-1 text-xs text-white focus:border-cyan-tech focus:outline-none" />
+            <label htmlFor="date-to" className="text-[10px] uppercase tracking-wider text-text-muted block mb-1">Hasta</label>
+            <input id="date-to" type="datetime-local" value={dateTo} onChange={(e) => setDateTo(e.target.value)} aria-label="Fecha hasta" className="w-full rounded border border-gridline bg-cyber-black px-2 py-1 text-xs text-white placeholder:text-text-muted focus:border-acento focus:outline-none" />
           </div>
         </div>
 
@@ -448,15 +517,15 @@ function SensorDetailModal({ sensor, valor, history, status, onSensorUpdate, onC
                 </tr>
               </thead>
               <tbody>
-                {displayHistory.map((d, i) => (
-                  <tr key={i} className="border-b border-gridline/30">
+                {displayHistory.map((d) => (
+                  <tr key={d.timestamp} className="border-b border-gridline/30">
                     <td className="p-1.5 font-mono text-text-muted">{new Date(d.timestamp * 1000).toLocaleString()}</td>
                     <td className="p-1.5">
                       <span className={`px-1.5 py-0.5 rounded text-[10px] font-mono ${d.valor === 1 ? 'bg-industrial-green/20 text-industrial-green' : 'bg-gridline/30 text-text-muted'}`}>
                         {d.valor === 1 ? 'ON' : 'OFF'}
                       </span>
                     </td>
-                    <td className="p-1.5 font-mono text-right text-cyan-tech">{d.cambios ?? 0}</td>
+                    <td className="p-1.5 font-mono text-right text-acento">{d.cambios ?? 0}</td>
                   </tr>
                 ))}
               </tbody>
@@ -466,9 +535,9 @@ function SensorDetailModal({ sensor, valor, history, status, onSensorUpdate, onC
           <div className="h-48 rounded-lg border border-gridline bg-cyber-black p-2 mb-4">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={dailyData.map(d => ({ dia: d.dia, total: d.total }))} margin={{ top: 8, right: 8, bottom: 8, left: 0 }}>
-                <XAxis dataKey="dia" tick={{ fill: '#78909C', fontSize: 10 }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fill: '#78909C', fontSize: 10 }} axisLine={false} tickLine={false} />
-                <Bar dataKey="total" fill="#00E5FF" radius={[2, 2, 0, 0]} maxBarSize={32} />
+                <XAxis dataKey="dia" tick={{ fill: CHART_COLORS.muted, fontSize: 10 }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fill: CHART_COLORS.muted, fontSize: 10 }} axisLine={false} tickLine={false} />
+                <Bar dataKey="total" fill={CHART_COLORS.accent} radius={[2, 2, 0, 0]} maxBarSize={32} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -478,8 +547,8 @@ function SensorDetailModal({ sensor, valor, history, status, onSensorUpdate, onC
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData} margin={{ top: 8, right: 8, bottom: 8, left: 0 }}>
                   <XAxis dataKey="timestamp" hide />
-                  <YAxis domain={['auto', 'auto']} tick={{ fill: '#78909C', fontSize: 10 }} axisLine={false} tickLine={false} />
-                  <Bar dataKey="valor" fill="#00E5FF" radius={[2, 2, 0, 0]} maxBarSize={16} />
+                  <YAxis domain={['auto', 'auto']} tick={{ fill: CHART_COLORS.muted, fontSize: 10 }} axisLine={false} tickLine={false} />
+                  <Bar dataKey="valor" fill={CHART_COLORS.accent} radius={[2, 2, 0, 0]} maxBarSize={16} />
                 </BarChart>
               </ResponsiveContainer>
             ) : (
@@ -492,8 +561,8 @@ function SensorDetailModal({ sensor, valor, history, status, onSensorUpdate, onC
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={chartData} margin={{ top: 8, right: 8, bottom: 8, left: 0 }}>
                   <XAxis dataKey="timestamp" hide />
-                  <YAxis domain={['auto', 'auto']} tick={{ fill: '#78909C', fontSize: 10 }} axisLine={false} tickLine={false} />
-                  <Line type="monotone" dataKey="valor" stroke="#00E5FF" strokeWidth={2} dot={false} />
+                  <YAxis domain={['auto', 'auto']} tick={{ fill: CHART_COLORS.muted, fontSize: 10 }} axisLine={false} tickLine={false} />
+                  <Line type="monotone" dataKey="valor" stroke={CHART_COLORS.accent} strokeWidth={2} dot={false} />
                 </LineChart>
               </ResponsiveContainer>
             ) : (
@@ -508,11 +577,11 @@ function SensorDetailModal({ sensor, valor, history, status, onSensorUpdate, onC
             <div className="flex-1">
               <label className="text-[10px] uppercase tracking-wider text-text-muted block mb-1">Tipo de gráfico</label>
               {isState ? (
-                <div className="text-xs text-cyan-tech py-1.5">Indicador LED</div>
+                <div className="text-xs text-acento py-1.5">Indicador LED</div>
               ) : isCounter ? (
-                <div className="text-xs text-green-400 py-1.5">Barras diarias</div>
+                <div className="text-xs text-industrial-green py-1.5">Barras diarias</div>
               ) : (
-                <select value={tipoGraficoId} onChange={(e) => setTipoGraficoId(Number(e.target.value))} disabled={!isAdmin || savingAlarm} className="w-full rounded border border-gridline bg-cyber-black px-2 py-1 text-xs text-white focus:border-cyan-tech focus:outline-none">
+                <select value={tipoGraficoId} onChange={(e) => setTipoGraficoId(Number(e.target.value))} disabled={!isAdmin || savingAlarm} className="w-full rounded border border-gridline bg-cyber-black px-2 py-1 text-xs text-white focus:border-acento focus:outline-none">
                   {tipoGraficos.map((t) => (
                     <option key={t.id} value={t.id}>{t.nombre} ({t.widget})</option>
                   ))}
@@ -521,7 +590,7 @@ function SensorDetailModal({ sensor, valor, history, status, onSensorUpdate, onC
             </div>
             <div className="flex-1">
               <label className="text-[10px] uppercase tracking-wider text-text-muted block mb-1">Unidad</label>
-              <select value={unidadId} onChange={(e) => setUnidadId(Number(e.target.value))} disabled={!isAdmin || savingAlarm} className="w-full rounded border border-gridline bg-cyber-black px-2 py-1 text-xs text-white focus:border-cyan-tech focus:outline-none">
+              <select value={unidadId} onChange={(e) => setUnidadId(Number(e.target.value))} disabled={!isAdmin || savingAlarm} className="w-full rounded border border-gridline bg-cyber-black px-2 py-1 text-xs text-white focus:border-acento focus:outline-none">
                 {unidades.map((u) => (
                   <option key={u.id} value={u.id}>{u.nombre} ({u.simbolo})</option>
                 ))}
@@ -531,53 +600,16 @@ function SensorDetailModal({ sensor, valor, history, status, onSensorUpdate, onC
           {isAdmin && (
             showNewUnidad ? (
               <div className="flex items-end gap-2 mt-2">
-                <input type="text" value={newUnidadNombre} onChange={(e) => setNewUnidadNombre(e.target.value)} placeholder="Nombre" className="flex-1 rounded border border-gridline bg-cyber-black px-2 py-1 text-xs text-white focus:border-cyan-tech focus:outline-none" />
-                <input type="text" value={newUnidadSimbolo} onChange={(e) => setNewUnidadSimbolo(e.target.value)} placeholder="Símbolo" className="w-20 rounded border border-gridline bg-cyber-black px-2 py-1 text-xs text-white focus:border-cyan-tech focus:outline-none" />
-                <button onClick={handleAddUnidad} className="text-cyan-tech hover:text-white text-xs">Crear</button>
+                <input type="text" value={newUnidadNombre} onChange={(e) => setNewUnidadNombre(e.target.value)} placeholder="Nombre" aria-label="Nombre de la unidad" className="flex-1 rounded border border-gridline bg-cyber-black px-2 py-1 text-xs text-white placeholder:text-text-muted focus:border-acento focus:outline-none" />
+                <input type="text" value={newUnidadSimbolo} onChange={(e) => setNewUnidadSimbolo(e.target.value)} placeholder="Símbolo" aria-label="Símbolo de la unidad" className="w-20 rounded border border-gridline bg-cyber-black px-2 py-1 text-xs text-white placeholder:text-text-muted focus:border-acento focus:outline-none" />
+                <button onClick={handleAddUnidad} className="text-acento hover:text-white text-xs">Crear</button>
                 <button onClick={() => setShowNewUnidad(false)} className="text-text-muted hover:text-white text-xs">Cancelar</button>
               </div>
             ) : (
-              <button onClick={() => setShowNewUnidad(true)} className="mt-2 text-xs text-cyan-tech hover:text-white">+ Nueva unidad</button>
+              <button onClick={() => setShowNewUnidad(true)} className="mt-2 text-xs text-acento hover:text-white">+ Nueva unidad</button>
             )
           )}
         </div>
-
-        <div className="rounded-lg border border-gridline bg-cyber-black p-4">
-          <h3 className="text-sm font-semibold text-white mb-3">Configuración de Alarma</h3>
-          <div className="flex items-center gap-2 mb-3">
-            <label className="text-xs text-text-muted">Alarma activa</label>
-            <input type="checkbox" checked={alarmaActiva} onChange={(e) => setAlarmaActiva(e.target.checked)} disabled={!isAdmin || savingAlarm} className="accent-cyan-tech" />
-          </div>
-          {isState ? (
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <input type="checkbox" checked={alarmaOn} onChange={(e) => { setAlarmaOn(e.target.checked); if (e.target.checked) setAlarmaOff(false); }} disabled={!isAdmin || savingAlarm} className="accent-cyan-tech" />
-                <label className="text-xs text-text-muted">Alarma en ON (valor = 1)</label>
-              </div>
-              <div className="flex items-center gap-2">
-                <input type="checkbox" checked={alarmaOff} onChange={(e) => { setAlarmaEnOff(e.target.checked); if (e.target.checked) setAlarmaOn(false); }} disabled={!isAdmin || savingAlarm} className="accent-cyan-tech" />
-                <label className="text-xs text-text-muted">Alarma en OFF (valor = 0)</label>
-              </div>
-            </div>
-          ) : (
-            <div className="flex gap-4">
-              <div className="flex-1">
-                <label className="text-[10px] uppercase tracking-wider text-text-muted block mb-1">Rango mínimo</label>
-                <input type="number" value={rangoMin} onChange={(e) => setRangoMin(e.target.value)} disabled={!isAdmin || savingAlarm} className="w-full rounded border border-gridline bg-cyber-black px-2 py-1 text-xs text-white focus:border-cyan-tech focus:outline-none" placeholder="Sin límite" />
-              </div>
-              <div className="flex-1">
-                <label className="text-[10px] uppercase tracking-wider text-text-muted block mb-1">Rango máximo</label>
-                <input type="number" value={rangoMax} onChange={(e) => setRangoMax(e.target.value)} disabled={!isAdmin || savingAlarm} className="w-full rounded border border-gridline bg-cyber-black px-2 py-1 text-xs text-white focus:border-cyan-tech focus:outline-none" placeholder="Sin límite" />
-              </div>
-            </div>
-          )}
-        </div>
-
-        {isAdmin && (
-          <button onClick={handleSaveAlarm} disabled={savingAlarm} className="w-full rounded bg-cyan-tech/20 px-4 py-2 text-sm text-cyan-tech hover:bg-cyan-tech/30 disabled:opacity-50">
-            {savingAlarm ? 'Guardando...' : 'Guardar configuración'}
-          </button>
-        )}
       </div>
     </div>
   );

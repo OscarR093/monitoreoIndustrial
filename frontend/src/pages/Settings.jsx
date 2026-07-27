@@ -44,7 +44,7 @@ export default function Settings() {
   return (
     <div className="p-6 bg-cyber-black min-h-full">
       <h1 className="font-mono text-xl font-bold text-white flex items-center gap-2 mb-6">
-        <SettingsIcon size={20} className="text-cyan-tech" />
+        <SettingsIcon size={20} className="text-acento" />
         Configuración
       </h1>
 
@@ -96,11 +96,11 @@ function ProfileSection({ icon }) {
           <Field label="Contraseña actual" value={currentPassword} onChange={setCurrentPassword} type="password" placeholder="••••••" />
         </div>
         <button type="submit" disabled={saving}
-          className="w-full rounded bg-cyan-tech py-2 text-sm font-semibold text-cyber-black hover:bg-cyan-tech/80 disabled:opacity-50 transition-colors">
+          className="w-full rounded bg-acento py-2 text-sm font-semibold text-cyber-black hover:bg-acento/80 disabled:opacity-50 transition-colors">
           {saving ? 'Guardando...' : 'Guardar perfil'}
         </button>
       </form>
-      {msg && <p className={`mt-2 text-xs ${msg.ok ? 'text-industrial-green' : 'text-red-400'}`}>{msg.text}</p>}
+      {msg && <p className={`mt-2 text-xs ${msg.ok ? 'text-industrial-green' : 'text-industrial-red'}`}>{msg.text}</p>}
     </Card>
   );
 }
@@ -178,35 +178,35 @@ function SecuritySection({ icon }) {
 
       {!pinSent ? (
         <button onClick={handleSendPin} disabled={saving || !currentPw || !newPw || !confirmPw}
-          className="w-full rounded border border-red-500/30 bg-red-500/10 py-2 text-sm font-semibold text-red-400 hover:bg-red-500/20 disabled:opacity-40 transition-colors">
+          className="w-full rounded border border-industrial-red/30 bg-industrial-red/10 py-2 text-sm font-semibold text-industrial-red hover:bg-industrial-red/20 disabled:opacity-40 transition-colors">
           {saving ? 'Verificando...' : 'Cambiar contraseña'}
         </button>
       ) : (
-        <div className="rounded-lg border border-cyan-tech/30 bg-cyber-black p-4">
+        <div className="rounded-lg border border-acento/30 bg-cyber-black p-4">
           <p className="text-xs text-text-muted mb-3">
             Ingresa el PIN de 6 dígitos {devPin ? null : 'enviado a tu email'}
-            {devPin && <span className="text-cyan-tech ml-1">[DEV: {devPin}]</span>}
+            {devPin && <span className="text-acento ml-1">[DEV: {devPin}]</span>}
           </p>
           <div className="flex items-center gap-3">
             <input type="text" value={pin} onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 6))}
-              maxLength={6} placeholder="______"
-              className="w-32 rounded border border-gridline bg-cyber-black px-3 py-2 text-center font-mono text-lg tracking-[8px] text-cyan-tech focus:border-cyan-tech focus:outline-none" />
+              maxLength={6} placeholder="______" aria-label="Código PIN"
+              className="w-32 rounded border border-gridline bg-cyber-black px-3 py-2 text-center font-mono text-lg tracking-[8px] text-acento placeholder:text-text-muted focus:border-acento focus:outline-none" />
             <span className="text-xs text-text-muted font-mono">{timer ? fm(timer) : '--:--'}</span>
             <button onClick={handleVerifyPin} disabled={pinSaving || pin.length !== 6}
-              className="rounded bg-cyan-tech px-4 py-2 text-xs font-semibold text-cyber-black hover:bg-cyan-tech/80 disabled:opacity-50">
+              className="rounded bg-acento px-4 py-2 text-xs font-semibold text-cyber-black hover:bg-acento/80 disabled:opacity-50">
               {pinSaving ? '...' : 'Verificar'}
             </button>
             <button onClick={() => { setPinSent(false); setDevPin(null); setTimer(null); }}
               className="text-xs text-text-muted hover:text-white">Cancelar</button>
           </div>
-          {pinMsg && <p className="mt-2 text-xs text-cyan-tech">{pinMsg.text}</p>}
+          {pinMsg && <p className="mt-2 text-xs text-acento">{pinMsg.text}</p>}
           {timer && timer < 60 && (
-            <button onClick={handleSendPin} className="mt-2 text-xs text-cyan-tech hover:text-white block">Reenviar código</button>
+            <button onClick={handleSendPin} className="mt-2 text-xs text-acento hover:text-white block">Reenviar código</button>
           )}
         </div>
       )}
 
-      {msg && <p className={`mt-2 text-xs ${msg.ok ? 'text-industrial-green' : 'text-red-400'}`}>{msg.text}</p>}
+      {msg && <p className={`mt-2 text-xs ${msg.ok ? 'text-industrial-green' : 'text-industrial-red'}`}>{msg.text}</p>}
     </Card>
   );
 }
@@ -243,14 +243,14 @@ function AlarmChannelsSection({ icon }) {
           const active = state?.activo || false;
           return (
             <button key={ch.tipo} onClick={() => setModalOpen(ch)}
-              className="w-full flex items-center gap-3 rounded-lg border border-gridline bg-cyber-black px-4 py-3 text-left hover:border-cyan-tech/30 transition-colors group">
-              {(() => { const Icon = CHANNEL_ICONS[ch.tipo]; return <Icon size={18} className={`shrink-0 ${active ? 'text-cyan-tech' : 'text-text-muted/50 group-hover:text-text-muted'}`} />; })()}
+              className="w-full flex items-center gap-3 rounded-lg border border-gridline bg-cyber-black px-4 py-3 text-left hover:border-acento/30 transition-colors group">
+              {(() => { const Icon = CHANNEL_ICONS[ch.tipo]; return <Icon size={18} className={`shrink-0 ${active ? 'text-acento' : 'text-text-muted/50 group-hover:text-text-muted'}`} />; })()}
               <div className="flex-1 min-w-0">
                 <p className="text-sm text-white font-medium">{ch.label}</p>
                 <p className="text-[11px] text-text-muted truncate">{ch.desc}</p>
               </div>
               {active && <span className="text-[10px] text-industrial-green font-mono">ACTIVO</span>}
-              <EditIcon size={14} className="text-text-muted/40 group-hover:text-cyan-tech shrink-0" />
+              <EditIcon size={14} className="text-text-muted/40 group-hover:text-acento shrink-0" />
             </button>
           );
         })}
@@ -308,14 +308,14 @@ function ChannelModal({ channel, existing, onClose, onSaved }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" onClick={onClose}>
-      <div className="w-full max-w-md rounded-xl border border-gridline bg-panel p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" role="dialog" onClick={onClose} onKeyDown={(e) => e.key === 'Escape' && onClose()}>
+      <div className="w-full max-w-md rounded-xl border border-gridline bg-panel p-6" aria-labelledby="channel-modal-title" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="font-mono text-lg font-bold text-white flex items-center gap-2">
-            <ChannelIcon size={20} className="text-cyan-tech" />
+          <h2 className="font-mono text-lg font-bold text-white flex items-center gap-2" id="channel-modal-title">
+            <ChannelIcon size={20} className="text-acento" />
             {channel.label}
           </h2>
-          <button onClick={onClose} className="rounded p-1 text-text-muted hover:bg-cyber-black hover:text-white"><XIcon size={18} /></button>
+          <button onClick={onClose} className="rounded p-1 min-w-[32px] min-h-[32px] flex items-center justify-center text-text-muted hover:bg-cyber-black hover:text-white" aria-label="Cerrar"><XIcon size={18} /></button>
         </div>
 
         <p className="text-xs text-text-muted mb-4">{channel.desc}</p>
@@ -323,10 +323,10 @@ function ChannelModal({ channel, existing, onClose, onSaved }) {
         <div className="space-y-3">
           {channel.fields.map((f) => (
             <div key={f.key}>
-              <label className="text-[10px] uppercase tracking-wider text-text-muted block mb-1">{f.label}</label>
-              <input type={f.key.includes('token') || f.key.includes('Token') || f.key.includes('key') ? 'password' : 'text'}
+              <label htmlFor={`channel-field-${f.key}`} className="text-[10px] uppercase tracking-wider text-text-muted block mb-1">{f.label}</label>
+              <input id={`channel-field-${f.key}`} type={f.key.includes('token') || f.key.includes('Token') || f.key.includes('key') ? 'password' : 'text'}
                 value={fields[f.key] || ''} onChange={(e) => setFields({ ...fields, [f.key]: e.target.value })}
-                placeholder={f.placeholder} className="w-full rounded border border-gridline bg-cyber-black px-3 py-2 text-xs text-white focus:border-cyan-tech focus:outline-none" />
+                placeholder={f.placeholder} className="w-full rounded border border-gridline bg-cyber-black px-3 py-2 text-xs text-white placeholder:text-text-muted focus:border-acento focus:outline-none" />
               {f.helper && <p className="text-[10px] text-text-muted/60 mt-0.5">{f.helper}</p>}
             </div>
           ))}
@@ -334,16 +334,16 @@ function ChannelModal({ channel, existing, onClose, onSaved }) {
 
         <div className="flex items-center justify-between mt-4 pt-4 border-t border-gridline">
           <label className="flex items-center gap-2 text-xs text-text-muted">
-            <input type="checkbox" checked={activo} onChange={(e) => setActivo(e.target.checked)} className="accent-cyan-tech" />
+            <input type="checkbox" checked={activo} onChange={(e) => setActivo(e.target.checked)} className="accent-acento" />
             Activo
           </label>
           <button onClick={handleSave} disabled={saving}
-            className="rounded bg-cyan-tech px-5 py-2 text-sm font-semibold text-cyber-black hover:bg-cyan-tech/80 disabled:opacity-50">
+            className="rounded bg-acento px-5 py-2 text-sm font-semibold text-cyber-black hover:bg-acento/80 disabled:opacity-50">
             {saving ? 'Guardando...' : 'Guardar'}
           </button>
         </div>
 
-        {msg && <p className={`mt-2 text-xs ${msg.includes('Error') ? 'text-red-400' : 'text-cyan-tech'}`}>{msg}</p>}
+        {msg && <p className={`mt-2 text-xs ${msg.includes('Error') ? 'text-industrial-red' : 'text-acento'}`}>{msg}</p>}
       </div>
     </div>
   );
@@ -351,8 +351,8 @@ function ChannelModal({ channel, existing, onClose, onSaved }) {
 
 function Card({ title, danger, icon: Icon, children }) {
   return (
-    <div className={`rounded-xl border ${danger ? 'border-red-500/20' : 'border-gridline'} bg-panel p-5`}>
-      <h2 className={`text-sm font-semibold mb-4 flex items-center gap-2 ${danger ? 'text-red-400' : 'text-white'}`}>
+    <div className={`rounded-xl border ${danger ? 'border-industrial-red/20' : 'border-gridline'} bg-panel p-5`}>
+      <h2 className={`text-sm font-semibold mb-4 flex items-center gap-2 ${danger ? 'text-industrial-red' : 'text-white'}`}>
         {Icon && <Icon size={16} />}
         {title}
       </h2>
@@ -362,11 +362,12 @@ function Card({ title, danger, icon: Icon, children }) {
 }
 
 function Field({ label, value, onChange, type, placeholder }) {
+  const id = `field-${label}`;
   return (
     <div>
-      <label className="text-[10px] uppercase tracking-wider text-text-muted block mb-1">{label}</label>
-      <input type={type || 'text'} value={value} onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder} className="w-full rounded border border-gridline bg-cyber-black px-3 py-2 text-sm text-white focus:border-cyan-tech focus:outline-none" />
+      <label htmlFor={id} className="text-[10px] uppercase tracking-wider text-text-muted block mb-1">{label}</label>
+      <input id={id} type={type || 'text'} value={value} onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder} className="w-full rounded border border-gridline bg-cyber-black px-3 py-2 text-sm text-white placeholder:text-text-muted focus:border-acento focus:outline-none" />
     </div>
   );
 }

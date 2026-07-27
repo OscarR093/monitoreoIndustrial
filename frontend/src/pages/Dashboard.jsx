@@ -12,6 +12,7 @@ export default function Dashboard() {
   const [selectedPlanta, setSelectedPlanta] = useState('');
   const [selectedArea, setSelectedArea] = useState('');
   const [realtimeData, setRealtimeData] = useState({});
+  const [lastSeen, setLastSeen] = useState({});
   const [wsStatus, setWsStatus] = useState('disconnected');
   const [lastUpdate, setLastUpdate] = useState(null);
   const wsRef = useRef(null);
@@ -24,9 +25,10 @@ export default function Dashboard() {
     api.get('/api/plantas')
       .then((data) => {
         setPlantas(data);
-        if (data.length > 0 && !selectedPlanta) {
-          setSelectedPlanta(data[0].codigo);
-        }
+        setSelectedPlanta((prev) => {
+          if (data.length > 0 && !prev) return data[0].codigo;
+          return prev;
+        });
       })
       .catch(() => {});
   }, []);
@@ -53,12 +55,14 @@ export default function Dashboard() {
     setSelectedArea('');
     setSensores([]);
     setRealtimeData({});
+    setLastSeen({});
   }, []);
 
   const handleAreaChange = useCallback((a) => {
     setSelectedArea(a);
     setSensores([]);
     setRealtimeData({});
+    setLastSeen({});
   }, []);
 
   const connectWs = useCallback(() => {
@@ -76,8 +80,14 @@ export default function Dashboard() {
       try {
         const datos = JSON.parse(e.data);
         const update = {};
+        const now = Date.now();
         datos.forEach((d) => { update[d.sensor] = d.valor; });
         setRealtimeData((prev) => ({ ...prev, ...update }));
+        setLastSeen((prev) => {
+          const next = { ...prev };
+          datos.forEach((d) => { next[d.sensor] = now; });
+          return next;
+        });
         setLastUpdate(new Date());
       } catch {}
     };
@@ -133,18 +143,20 @@ export default function Dashboard() {
     return count;
   }, [sensores, realtimeData]);
 
+  const alertTint = alertCount === 0 ? '' : alertCount <= 2 ? 'bg-industrial-amber/3' : 'bg-industrial-amber/5';
+
   const zoneStorageKey = `${selectedPlanta}/${selectedArea}/zones`;
 
   if (!plantas.length) {
     return (
       <div className="flex h-full items-center justify-center bg-cyber-black">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-cyan-tech border-t-transparent" />
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-acento border-t-transparent" />
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col h-full bg-cyber-black">
+    <div className={`flex flex-col h-full bg-cyber-black transition-colors duration-700 ${alertTint}`}>
       <NavigationBar
         wsStatus={wsStatus}
         alertCount={alertCount}
@@ -162,7 +174,15 @@ export default function Dashboard() {
         onAreaChange={handleAreaChange}
       />
 
-      <div className="flex-1 overflow-auto p-4">
+      <div className="flex-1 overflow-auto p-4" role="main">
+        {alertCount > 0 && (
+          <div className="mb-3 rounded-lg border border-industrial-amber/30 bg-industrial-amber/10 px-4 py-2 flex items-center gap-2 animate-alert-pulse">
+            <span className="font-mono text-sm font-bold text-industrial-amber">{alertCount}</span>
+            <span className="text-xs text-industrial-amber/80">
+              {alertCount === 1 ? 'sensor en alarma' : 'sensores en alarma'} — verifique las tarjetas resaltadas
+            </span>
+          </div>
+        )}
         {!selectedArea && (
           <div className="flex h-full items-center justify-center">
             <p className="text-sm text-text-muted">Seleccione una planta y un área para ver los sensores</p>
@@ -181,6 +201,7 @@ export default function Dashboard() {
             name={name}
             sensores={zoneSensors}
             realtimeData={realtimeData}
+            lastSeen={lastSeen}
             storageKey={`${zoneStorageKey}/${name}`}
             forceExpand={expandAll}
             forceCollapse={collapseAll}

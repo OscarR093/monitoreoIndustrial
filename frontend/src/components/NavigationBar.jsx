@@ -28,9 +28,9 @@ export default function NavigationBar({
   const StatusIcon = status.icon;
 
   return (
-    <header className="flex items-center justify-between bg-panel px-5 py-3 border-b-2 border-cyan-tech/20 shadow-lg shadow-cyan-tech/5">
+    <header className="flex flex-wrap items-center justify-between gap-2 bg-panel px-5 py-3 border-b-2 border-acento/20" role="banner">
       <div className="flex items-center gap-2">
-        <span className="font-mono text-base font-black text-cyan-tech tracking-[0.2em]">SCADA</span>
+        <h1 className="font-mono text-base font-black text-acento tracking-[0.2em]">SCADA</h1>
         <span className="h-4 w-px bg-gridline" />
         <span className="text-[10px] uppercase tracking-widest text-text-muted font-medium">Monitoreo Industrial</span>
       </div>
@@ -42,7 +42,7 @@ export default function NavigationBar({
         </div>
 
         {alertCount > 0 && (
-          <div className="flex items-center gap-1.5 rounded-full border border-industrial-amber/40 bg-industrial-amber/10 px-3 py-1">
+          <div className="flex items-center gap-1.5 rounded-full border border-industrial-amber/40 bg-industrial-amber/10 px-3 py-1 animate-alert-pulse">
             <AlertTriangle size={iconSize.inline} className="text-industrial-amber" />
             <span className="font-mono text-xs font-bold text-industrial-amber">{alertCount}</span>
             <span className="text-[10px] uppercase tracking-wider text-industrial-amber/70">Alertas</span>
@@ -50,10 +50,10 @@ export default function NavigationBar({
         )}
 
         <div className="flex items-center gap-1.5">
-          <button onClick={onExpandAll} className="rounded p-1.5 text-text-muted hover:bg-cyber-black hover:text-cyan-tech transition-colors" title="Expandir zonas">
+          <button onClick={onExpandAll} className="rounded p-1.5 min-w-[32px] min-h-[32px] flex items-center justify-center text-text-muted hover:bg-cyber-black hover:text-acento transition-colors" title="Expandir zonas" aria-label="Expandir todas las zonas">
             <Expand size={iconSize.inline} />
           </button>
-          <button onClick={onCollapseAll} className="rounded p-1.5 text-text-muted hover:bg-cyber-black hover:text-cyan-tech transition-colors" title="Colapsar zonas">
+          <button onClick={onCollapseAll} className="rounded p-1.5 min-w-[32px] min-h-[32px] flex items-center justify-center text-text-muted hover:bg-cyber-black hover:text-acento transition-colors" title="Colapsar zonas" aria-label="Colapsar todas las zonas">
             <Shrink size={iconSize.inline} />
           </button>
         </div>
@@ -62,7 +62,7 @@ export default function NavigationBar({
           {lastUpdate ? (
             <div className="flex items-center gap-1.5">
               <span className="text-[10px] uppercase tracking-wider text-text-muted">Último dato</span>
-              <span className="font-mono text-cyan-tech font-bold">{lastUpdate.toLocaleTimeString()}</span>
+              <span className="font-mono text-acento font-bold">{lastUpdate.toLocaleTimeString()}</span>
             </div>
           ) : (
             <span className="font-mono text-text-muted text-xs">--:--:--</span>
