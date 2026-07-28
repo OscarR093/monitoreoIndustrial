@@ -1,195 +1,217 @@
-# ⚙️ Monitoreo Industrial
-
-Sistema SCADA de monitoreo industrial con sensores analógicos y digitales, contadores MES/OEE, alarmas configurables y visualización en tiempo real. Diseñado para despliegue single-tenant por cliente en modo intranet o cloud.
+<div align="center">
 
 ```
- ██████╗ ██████╗ ██╗     ██████╗ ██╗               ██████╗ ██╗
-██╔════╝ ██╔══██╗██║    ██╔════╝ ██║              ██╔═══██╗██║
-██║      ██████╔╝██║    ██║     ███████╗           ██║   ██║██║
-██║      ██╔═══╝ ██║    ██║     ╚════██║           ██║▄▄ ██║██║
-╚██████╗ ██║     ██║    ╚██████╗     ██║           ╚██████╔╝██║
- ╚═════╝ ╚═╝     ╚═╝     ╚═════╝     ╚═╝            ╚══▀▀═╝ ╚═╝
-
-    Bridge ──MQTT──▶ API (.NET) ──WebSocket──▶ Dashboard (React)
+╔══════════════════════════════════════════════════════════════════╗
+║                                                                  ║
+║   ███████╗ ██████╗ █████╗ ██████╗  █████╗                        ║
+║   ██╔════╝██╔════╝██╔══██╗██╔══██╗██╔══██╗                       ║
+║   ███████╗██║     ███████║██║  ██║███████║                       ║
+║   ╚════██║██║     ██╔══██║██║  ██║██╔══██║                       ║
+║   ███████║╚██████╗██║  ██║██████╔╝██║  ██║                       ║
+║   ╚══════╝ ╚═════╝╚═╝  ╚═╝╚═════╝ ╚═╝  ╚═╝                       ║
+║                                                                  ║
+║        ╔═══════════════════════════════════════════════╗         ║
+║        ║    S I S T E M A   D E   M O N I T O R E O   ║         ║
+║        ║           I N D U S T R I A L                 ║         ║
+║        ╚═══════════════════════════════════════════════╝         ║
+║                                                                  ║
+╚══════════════════════════════════════════════════════════════════╝
 ```
 
-## Componentes
+### Dashboard SCADA para monitoreo en tiempo real de sensores industriales
+
+<br>
+
+```
+  PLC ──MQTT──▶ API (.NET) ──WebSocket──▶ Dashboard (React)
+   │                │                          │
+   │       ┌────────┴────────┐          ┌──────┴──────┐
+   │       │   PostgreSQL    │          │  Navegador  │
+   │       │   Alarmas       │          │  Tiempo real│
+   │       │   Telegram/Email│          └─────────────┘
+   │       └─────────────────┘
+   │
+   └── Simulación incluida ── sin hardware necesario
+```
+
+</div>
+
+---
+
+## ⚡ ¿Qué hace?
+
+Sistema industrial autocontenido que recolecta datos de sensores vía PLC (real o simulado), los transmite por MQTT, los almacena en PostgreSQL y los visualiza en un **dashboard web en tiempo real** con WebSocket. Incluye alarmas configurables con notificaciones por Telegram y correo electrónico.
+
+```
+┌──────────────────────────────────────────────────────────────────┐
+│                        DASHBOARD                                  │
+│  ┌─────────┐  ┌─────────┐  ┌─────────┐  ┌─────────┐             │
+│  │  247.5  │  │   ON    │  │  1247   │  │  189.2  │             │
+│  │   °C    │  │  MOTOR  │  │   ud    │  │   PSI   │             │
+│  │ ╱╲╱╲╱╲  │  │   ●━━━  │  │  ████▓  │  │ ╱╲╱╲╱╲  │             │
+│  └─────────┘  └─────────┘  └─────────┘  └─────────┘             │
+│  ┌──────────────────────────────────────────────────┐           │
+│  │ Temperaturas    ▾  4/4 activos                    │           │
+│  └──────────────────────────────────────────────────┘           │
+└──────────────────────────────────────────────────────────────────┘
+```
+
+### Tres tipos de sensor
+
+| | Analógico | Digital Estado | Digital Contador |
+|---|---|---|---|
+| **Ejemplo** | Temperatura, presión | Motor ON/OFF, puerta | Piezas producidas |
+| **Widget** | Línea · Gauge · Barra | Indicador LED | Número + barras diarias |
+| **Alarma** | Fuera de rango | ON / OFF | Fuera de rango |
+
+---
+
+## 🚀 Inicio rápido
+
+```bash
+# 1. Levantar infraestructura
+cd docker && docker compose up -d       # EMQX + PostgreSQL
+
+# 2. API (terminal 1)
+cd api && dotnet run --urls "http://0.0.0.0:5000"
+
+# 3. Bridge con simulación (terminal 2)
+cd bridge && python main.py              # 7 sensores simulados
+
+# 4. Frontend (terminal 3)
+cd frontend && npm install && npm run dev -- --host 0.0.0.0
+```
+
+> Abrir **http://localhost:5173** — credenciales: `admin` / `admin123`
+
+---
+
+## 🏗️ Arquitectura
 
 | Componente | Stack | Rol |
 |---|---|---|
-| **Bridge** | Python · paho-mqtt · pymodbus | Lee registros del PLC (real o simulado) y publica en MQTT |
-| **EMQX** | Docker | Broker MQTT con autenticación user/password |
-| **PostgreSQL** | Docker · EF Core | Almacenamiento de series temporales y configuración |
-| **API** | .NET 10 · MQTTnet 5 · JWT | REST + WebSocket, suscripción MQTT, alarmas |
-| **Frontend** | React 19 · Vite 8 · Tailwind 4 · Recharts | Dashboard en tiempo real con gráficos y alarmas |
+| **Bridge** | Python · paho-mqtt | Lee sensores y publica en MQTT |
+| **EMQX** | Docker | Broker MQTT con autenticación |
+| **API** | .NET 10 · EF Core · MQTTnet | REST + WebSocket + Alarmas |
+| **PostgreSQL** | Docker | Series temporales y configuración |
+| **Frontend** | React 19 · Vite 8 · Tailwind 4 | Dashboard con WebSocket |
 
-## Inicio Rápido
+### Flujo de datos
+
+```
+┌──────────┐     MQTT      ┌──────────┐    WebSocket    ┌──────────┐
+│  Bridge  │──────────────▶│   API    │────────────────▶│ Frontend │
+│          │  history/5min │          │   realtime/2s   │          │
+│  Python  │  realtime/2s  │  .NET    │   solo si hay   │  React   │
+│          │               │          │   espectadores  │          │
+└──────────┘               └────┬─────┘                 └──────────┘
+                                │
+                          ┌─────┴─────┐
+                          │ PostgreSQL│
+                          │ Alarmas   │
+                          │ Telegram  │
+                          │ Email     │
+                          └───────────┘
+```
+
+---
+
+## 🔐 Seguridad
+
+| Capa | Mecanismo |
+|---|---|
+| **API ↔ Frontend** | JWT httpOnly cookie · 3 roles (SuperAdmin, Admin, Viewer) |
+| **MQTT** | User/password |
+| **Datos sensibles** | Email y teléfono enmascarados en API |
+| **TLS** | Traefik + Let's Encrypt (cloud) · Sin TLS (intranet) |
+
+### Roles
+
+```
+    SuperAdmin ────▶ Admin ────▶ Viewer
+       │                │            │
+   Todo acceso     CRUD sensores   Solo lectura
+   Crear Admins    Crear Viewers   Dashboard
+   Eliminar Admins Gestionar       Sin admin
+```
+
+---
+
+## 🔔 Alarmas
+
+- **Analógico:** rango mínimo / máximo — notifica si el valor sale fuera del rango
+- **Digital estado:** notifica en ON, en OFF, o ambos
+- **Digital contador:** notifica si el acumulado sale fuera del rango
+
+> Cooldown de 5 minutos entre notificaciones · Canales: Telegram Bot API + Email (Resend/SMTP)
+
+---
+
+## 🌐 API REST
+
+```
+/api/auth/login          POST   Login
+/api/auth/me             GET    Perfil propio
+/api/auth/users          GET    Lista de usuarios (Admin+)
+/api/plantas             GET    Plantas disponibles
+/api/areas               GET    Áreas por planta
+/api/sensores            GET    Sensores por planta/área
+/api/datos               GET    Historial con filtro de fechas
+/api/datos?agregar=diario GET   Agregación diaria para contadores
+/api/unidades            GET    Unidades de medida
+```
+
+[Documentación completa de endpoints →](AGENTS.md)
+
+---
+
+## 📊 WebSocket
+
+```
+ws://host:5000/ws/realtime?planta=p1&area=a1
+```
+
+- JWT validado antes del upgrade
+- START automático al conectar el primer cliente → bridge activa realtime
+- STOP automático al desconectar el último → bridge pausa realtime
+- Datos **nunca se persisten en DB** — solo fluyen al dashboard
+
+---
+
+## 🎨 Diseño
+
+- **Paleta:** Ámbar industrial (#F59E0B) · Verde militar (#22C55E) · Rojo piloto (#DC2626)
+- **Tipografía:** Monospace para datos · Sans-serif para interfaz
+- **Profundidad:** Solo capas tonales · Cero sombras · 150ms transiciones
+- **Tema:** Oscuro · Alta densidad de información · Legibilidad a distancia de sala de control
+
+[Documentación completa de diseño →](DESIGN.md)
+
+---
+
+## 🔧 Variables de entorno
 
 ```bash
-# 1. Servicios Docker
-cd docker && docker compose up -d
-
-# 2. API
-cd api && dotnet run --urls "http://0.0.0.0:5000"
-
-# 3. Bridge (terminal aparte)
-cd bridge && python main.py
-
-# 4. Frontend (terminal aparte)
-cd frontend && npm run dev -- --host 0.0.0.0
+# .env
+DEPLOYMENT_MODE=intranet
+MQTT_BROKER=localhost
+MQTT_PORT=1883
+MQTT_USER=admin
+MQTT_PASS=secret
+JWT_SECRET=clave-super-secreta-minimo-32-caracteres
+SUPER_ADMIN_USERNAME=admin
+SUPER_ADMIN_PASSWORD=admin123
+SIMULATION=true
+PLANTA=p1
+AREA=a1
+HISTORY_INTERVAL=300    # 5 minutos entre datos de historial
+REALTIME_INTERVAL=2     # 2 segundos entre datos de realtime
+VITE_API_BASE=http://localhost:5000
 ```
 
-> Abrir http://localhost:5173 — credenciales iniciales: `admin` / `admin123`
+---
 
-### Puertos
-
-| Servicio | Puerto |
-|---|---|
-| Frontend | 5173 |
-| API | 5000 |
-| EMQX MQTT | 1883 |
-| EMQX Dashboard | 18083 |
-| PostgreSQL | 5432 |
-
-## Tipos de Sensores
-
-```
-┌──────────────────────────────────────────────────────────┐
-│                    SENSORES                               │
-├──────────────┬──────────────────┬────────────────────────┤
-│  ANALÓGICO   │  DIGITAL ESTADO  │  DIGITAL CONTADOR      │
-├──────────────┼──────────────────┼────────────────────────┤
-│ Temperatura  │ Motor ON/OFF     │ Piezas producidas      │
-│ Presión      │ Puerta abierta   │ Ciclos de máquina      │
-│ Voltaje      │ Final de carrera │ Unidades rechazadas    │
-│ Corriente    │ Nivel alto/bajo  │ Pulsos de encoder      │
-├──────────────┼──────────────────┼────────────────────────┤
-│ Widget:      │ Widget:          │ Widget:                │
-│ línea/gauge  │ Indicador LED    │ Número + barras       │
-│ /bar         │ (ON/OFF)         │ diarias                │
-├──────────────┼──────────────────┼────────────────────────┤
-│ Alarma por   │ Alarma en ON o   │ Alarma por rango       │
-│ rango min/max│ Alarma en OFF    │ min/max (acumulado)    │
-└──────────────┴──────────────────┴────────────────────────┘
-```
-
-- **Estado**: sensores binarios (0/1) — ideal para contactos, presencia, niveles
-- **Contador**: acumuladores incrementales — pensado para MES, OEE, KPIs de producción
-- El historial del contador muestra el total de activaciones por día en gráfica de barras
-
-## Autenticación y Roles
-
-| Rol | Dashboard | Sensores | Unidades | Plantas/Áreas | Usuarios |
-|---|---|---|---|---|---|
-| **SuperAdmin** | ✅ | CRUD | CRUD | Renombrar | Crear Admin + Viewer |
-| **Admin** | ✅ | CRUD | CRUD | Renombrar | Crear Viewer |
-| **Viewer** | ✅ | 👁️ | 👁️ | 👁️ | — |
-
-- JWT httpOnly cookie
-- MQTT autenticado con user/password
-- TLS opcional vía Traefik + Let's Encrypt (modo cloud)
-
-## API REST
-
-### Auth
-| Método | Endpoint | Auth |
-|---|---|---|
-| POST | `/api/auth/login` | — |
-| POST | `/api/auth/register` | Admin+ |
-| GET/PUT | `/api/auth/me` | Todos |
-| GET | `/api/auth/users` | Admin+ |
-| DELETE | `/api/auth/users/{id}` | Admin+ |
-
-### Entidades
-| Método | Endpoint | Auth | Notas |
-|---|---|---|---|
-| GET/PUT | `/api/plantas/{id}` | Admin+ | Nombre + alias editable |
-| GET/PUT | `/api/areas/{id}` | Admin+ | Nombre + alias editable |
-| GET/POST | `/api/sensores` | Todos/Admin+ | — |
-| PUT | `/api/sensores/{id}` | Admin+ | Alias, nombre, tipo, unidad, alarmas |
-| DELETE | `/api/sensores/{id}` | Admin+ | — |
-
-### Unidades (personalizables)
-| Método | Endpoint | Auth |
-|---|---|---|
-| GET | `/api/unidades` | Todos |
-| POST | `/api/unidades` | Admin+ |
-| PUT | `/api/unidades/{id}` | Admin+ |
-| DELETE | `/api/unidades/{id}` | Admin+ |
-
-> 8 unidades por defecto: °C, PSI, V, A, %, RPM, ON/OFF, ud.  
-> El Admin puede crear las suyas (ej: °F, bar, kg, L/h).
-
-### Datos
-| Método | Endpoint | Notas |
-|---|---|---|
-| GET | `/api/datos` | Filtro por sensor, planta, área, rango de fechas |
-| GET | `/api/datos?agregar=diario` | Agregación diaria para contadores MES/OEE |
-
-### Alarmas
-
-| Tipo de sensor | Configuración | Disparador |
-|---|---|---|
-| Analógico | `rangoMinimo` / `rangoMaximo` | Valor fuera de rango |
-| Digital estado | `alarmaEnOn` / `alarmaEnOff` | Valor = 1 o Valor = 0 |
-| Digital contador | `rangoMinimo` / `rangoMaximo` | Acumulado fuera de rango |
-
-> Cooldown de 5 minutos entre notificaciones. Canales: Telegram y Email.
-
-## WebSocket
-
-- **Endpoint**: `ws://host:5000/ws/realtime?planta=p1&area=a1`
-- **Auth**: JWT cookie validada antes del upgrade
-- **Control**: START al conectar cliente, STOP al desconectar — el bridge solo transmite datos en tiempo real si hay espectadores
-
-## Topics MQTT
-
-| Topic | Frecuencia | Contenido |
-|---|---|---|
-| `industrial/{p}/{a}/realtime` | 2s (si activo) | Estado actual de cada sensor |
-| `industrial/{p}/{a}/history` | 20 min | Valores + contador de cambios |
-| `industrial/{p}/{a}/control` | Bajo demanda | Comandos START / STOP |
-
-### Formato del mensaje
-
-```json
-[
-  {
-    "sensor": "c1",
-    "valor": 1247,
-    "tipo": "digital",
-    "modo": "contador",
-    "cambios": 23,
-    "timestamp": 1713500000.0
-  }
-]
-```
-
-| Campo | Descripción |
-|---|---|
-| `tipo` | `"analogico"` o `"digital"` |
-| `modo` | `"estado"` o `"contador"` (solo digitales) |
-| `cambios` | Transiciones/incrementos desde el último history |
-
-## Variables de Entorno
-
-| Variable | Default | Descripción |
-|---|---|---|
-| `DEPLOYMENT_MODE` | intranet | `cloud` o `intranet` |
-| `MQTT_BROKER` | localhost | Host del broker MQTT |
-| `MQTT_PORT` | 1883 | Puerto MQTT |
-| `MQTT_USE_TLS` | false | TLS para MQTT |
-| `MQTT_USER` | | Usuario EMQX |
-| `MQTT_PASS` | | Contraseña EMQX |
-| `JWT_SECRET` | (requerido) | HMAC-SHA256, mín 32 chars |
-| `SUPER_ADMIN_USERNAME` | admin | Usuario inicial |
-| `SUPER_ADMIN_PASSWORD` | admin123 | Contraseña inicial |
-| `PLANTA` | p1 | Planta del bridge |
-| `AREA` | a1 | Área del bridge |
-| `SIMULATION` | true | Usar simulación de PLC |
-| `VITE_API_BASE` | http://localhost:5000 | URL base de la API |
-
-## Tests
+## 🧪 Tests
 
 ```bash
 # xUnit — 47 tests con InMemory DB
@@ -199,21 +221,43 @@ cd api.Tests && dotnet test
 cd /tmp && node frontend-test.js
 ```
 
-## Documentación
+---
 
-- [AGENTS.md](AGENTS.md) — Documentación de desarrollo (arquitectura, endpoints, stack, comandos)
-- [openspec/](openspec/) — Planeación y seguimiento de cambios
+## 📁 Estructura
 
-## Estado
+```
+monitoreoIndustrial/
+├── api/           # .NET 10 Web API
+├── api.Tests/     # xUnit (47 tests)
+├── bridge/        # Python bridge + simulación
+├── frontend/      # React 19 dashboard
+├── docker/        # Docker Compose (EMQX + PostgreSQL)
+├── openspec/      # Planeación de cambios
+├── .env           # Variables de entorno
+├── DESIGN.md      # Sistema de diseño
+├── PRODUCT.md     # Contexto de producto
+└── AGENTS.md      # Documentación de desarrollo
+```
 
-- [x] API REST + WebSocket con JWT httpOnly cookie
-- [x] 3 roles jerárquicos (SuperAdmin, Admin, Viewer)
-- [x] Sensores analógicos con gráficos seleccionables (línea, gauge, barra)
-- [x] Sensores digitales de estado (LED ON/OFF) y contador (barras diarias)
-- [x] Contadores MES/OEE con agregación diaria de activaciones
-- [x] Alarmas configurables por sensor con rate limiting (Telegram + Email)
-- [x] Unidades personalizables (CRUD por Admin)
-- [x] Renombrar plantas, áreas y sensores (alias + nombre)
-- [x] Configuración de tipo de gráfico y unidad desde el modal del sensor
-- [x] Bridge con simulación de PLC (analógicos, digital estado, digital contador)
-- [x] 47 tests xUnit + tests Playwright E2E
+---
+
+## 📖 Documentación
+
+- **[AGENTS.md](AGENTS.md)** — Documentación de desarrollo completa: arquitectura, endpoints, stack, comandos, variables
+- **[DESIGN.md](DESIGN.md)** — Sistema de diseño: paleta, tipografía, componentes, reglas
+- **[PRODUCT.md](PRODUCT.md)** — Contexto de producto: usuarios, propósito, principios
+- **[openspec/](openspec/)** — Planeación y seguimiento de cambios
+
+---
+
+<div align="center">
+
+```
+╔═══════════════════════════════════════════════════════════╗
+║  Construido con .NET 10 · React 19 · Python 3 · Docker    ║
+║                                                           ║
+║  Licencia: MIT                                            ║
+╚═══════════════════════════════════════════════════════════╝
+```
+
+</div>

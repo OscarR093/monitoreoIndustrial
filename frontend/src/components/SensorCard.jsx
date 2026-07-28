@@ -87,7 +87,7 @@ const DigitalIndicator = memo(function DigitalIndicator({ value }) {
 const CounterWidget = memo(function CounterWidget({ value, unidad, delta }) {
   return (
     <div className="flex flex-col items-center justify-center h-32 gap-1">
-      <span className="font-mono text-[32px] font-bold text-white leading-none tabular-nums">
+      <span className="font-mono text-[28px] font-bold text-white leading-none tabular-nums">
         {value != null ? value.toLocaleString() : '--'}
       </span>
       <span className="text-xs text-text-muted font-medium">{unidad || 'ud'}</span>
@@ -425,7 +425,7 @@ function SensorDetailModal({ sensor, valor, history, status, onSensorUpdate, onC
       <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-xl border border-gridline bg-panel p-6" aria-labelledby="modal-title" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h2 id="modal-title" className="font-mono text-xl font-bold text-white">{getSensorDisplayName(sensor)}</h2>
+            <h2 id="modal-title" className="font-mono text-lg font-bold text-white">{getSensorDisplayName(sensor)}</h2>
             <p className="text-xs text-text-muted font-mono">{getSensorIdentifier(sensor)} · {sensor.unidad?.nombre} ({sensor.unidad?.simbolo})</p>
           </div>
           <button onClick={onClose} className="rounded p-1 min-w-[32px] min-h-[32px] flex items-center justify-center text-text-muted hover:bg-cyber-black hover:text-white transition-colors" aria-label="Cerrar">
@@ -548,7 +548,7 @@ function SensorDetailModal({ sensor, valor, history, status, onSensorUpdate, onC
                     [...displayHistory].reverse().slice(0, 100).map((d) => (
                       <tr key={d.timestamp} className="border-b border-gridline/30 hover:bg-panel/30">
                         <td className="p-2 font-mono text-text-muted whitespace-nowrap">{new Date(d.timestamp * 1000).toLocaleString()}</td>
-                        <td className="p-2 font-mono text-right text-white tabular-nums whitespace-nowrap">
+                        <td className="p-2 font-mono text-right text-white text-sm tabular-nums whitespace-nowrap">
                           {isState ? (
                             <span className={`px-1.5 py-0.5 rounded text-[10px] ${d.valor === 1 ? 'bg-industrial-green/20 text-industrial-green' : 'bg-gridline/30 text-text-muted'}`}>
                               {d.valor === 1 ? 'ON' : 'OFF'}
