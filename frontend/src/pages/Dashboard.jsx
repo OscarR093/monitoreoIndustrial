@@ -82,14 +82,15 @@ export default function Dashboard() {
         const datos = JSON.parse(e.data);
         const update = {};
         const now = Date.now();
-        datos.forEach((d) => { update[d.sensor] = d.valor; });
+        let maxTs = 0;
+        datos.forEach((d) => { update[d.sensor] = d.valor; if (d.timestamp > maxTs) maxTs = d.timestamp; });
         setRealtimeData((prev) => ({ ...prev, ...update }));
         setLastSeen((prev) => {
           const next = { ...prev };
           datos.forEach((d) => { next[d.sensor] = now; });
           return next;
         });
-        setLastUpdate(new Date());
+        setLastUpdate(maxTs ? new Date(maxTs * 1000) : new Date());
       } catch {}
     };
 

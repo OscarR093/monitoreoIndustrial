@@ -86,15 +86,18 @@ public class DatosController : ControllerBase
             var sensor = await _context.Sensores.FindAsync(sensorId.Value);
             if (sensor?.ModoDigital == "contador")
             {
-                var diario = await _context.DatosSensores
+                var rawData = await _context.DatosSensores
                     .Where(d => d.SensorId == sensorId.Value)
                     .Where(d => d.Timestamp >= (from ?? 0) && d.Timestamp <= (to ?? long.MaxValue))
-                    .GroupBy(d => d.CreatedAt.Date)
-                    .Select(g => new { Dia = g.Key, Total = g.Sum(d => d.Cambios) })
-                    .OrderBy(g => g.Dia)
                     .ToListAsync();
 
-                return Ok(new { raw = result, diario = diario.Select(d => new { dia = d.Dia.ToString("yyyy-MM-dd"), total = d.Total }) });
+                var diario = rawData
+                    .GroupBy(d => DateTimeOffset.FromUnixTimeSeconds(d.Timestamp).Date)
+                    .Select(g => new { Dia = g.Key.ToString("yyyy-MM-dd"), Total = g.Sum(d => d.Cambios) })
+                    .OrderBy(g => g.Dia)
+                    .ToList();
+
+                return Ok(new { raw = result, diario = diario.Select(d => new { dia = d.Dia, total = d.Total }) });
             }
         }
 

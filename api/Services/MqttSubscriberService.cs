@@ -103,7 +103,7 @@ public class MqttSubscriberService : BackgroundService
 
             foreach (var dato in datos)
             {
-                await GuardarDatoSensorAsync(dbContext, plantaCodigo, areaCodigo, dato, esRealtime, alarmService);
+                await GuardarDatoSensorAsync(dbContext, plantaCodigo, areaCodigo, dato, !esRealtime, alarmService);
             }
 
             await dbContext.SaveChangesAsync();

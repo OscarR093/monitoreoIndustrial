@@ -545,7 +545,7 @@ function SensorDetailModal({ sensor, valor, history, status, onSensorUpdate, onC
                   {displayHistory.length === 0 ? (
                     <tr><td colSpan={2} className="p-4 text-center text-text-muted">Sin datos en este período</td></tr>
                   ) : (
-                    displayHistory.slice(0, 100).map((d) => (
+                    [...displayHistory].reverse().slice(0, 100).map((d) => (
                       <tr key={d.timestamp} className="border-b border-gridline/30 hover:bg-panel/30">
                         <td className="p-2 font-mono text-text-muted whitespace-nowrap">{new Date(d.timestamp * 1000).toLocaleString()}</td>
                         <td className="p-2 font-mono text-right text-white tabular-nums whitespace-nowrap">
