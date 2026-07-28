@@ -43,7 +43,7 @@ export default function SensorZone({ name, sensores, realtimeData, lastSeen, sto
       >
         <ZoneIcon size={16} className="text-acento/70 group-hover:text-acento transition-colors" />
         <h2 className="text-sm font-semibold text-white uppercase tracking-wider">{name}</h2>
-        <span className="text-[10px] text-text-muted ml-auto font-mono">
+        <span className="text-xs text-text-muted ml-auto font-mono">
           {activeCount}/{sensores.length} activos
         </span>
         {collapsed ? <ChevronRightIcon size={14} className="text-text-muted" /> : <ChevronDownIcon size={14} className="text-text-muted" />}

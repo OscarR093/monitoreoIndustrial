@@ -68,10 +68,10 @@ export default function LocationSelector({
 
   return (
     <div className="flex items-center gap-4 border-b border-gridline bg-panel px-5 py-3">
-      <span className="text-[10px] uppercase tracking-widest text-text-muted font-semibold">Ubicación</span>
+      <span className="text-xs uppercase tracking-widest text-text-muted font-semibold">Ubicación</span>
 
       <div className="flex items-center gap-2 rounded border border-gridline bg-cyber-black px-3 py-2">
-        <label htmlFor="select-planta" className="text-[10px] uppercase tracking-wider text-text-muted font-medium">Planta</label>
+        <label htmlFor="select-planta" className="text-xs uppercase tracking-wider text-text-muted font-medium">Planta</label>
         <select
           id="select-planta"
           value={selectedPlanta}
@@ -121,7 +121,7 @@ export default function LocationSelector({
 
       {selectedPlanta && (
         <div className="flex items-center gap-2 rounded border border-gridline bg-cyber-black px-3 py-2">
-          <label htmlFor="select-area" className="text-[10px] uppercase tracking-wider text-text-muted font-medium">Área</label>
+          <label htmlFor="select-area" className="text-xs uppercase tracking-wider text-text-muted font-medium">Área</label>
           <select
             id="select-area"
             value={selectedArea}

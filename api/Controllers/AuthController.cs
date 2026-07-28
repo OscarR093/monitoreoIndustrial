@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using api.Data;
+using api.Helpers;
 using api.Models;
 using api.Services;
 
@@ -165,8 +166,8 @@ public class AuthController : ControllerBase
             Username = usuario.Username,
             Rol = usuario.Rol,
             NombreCompleto = usuario.NombreCompleto,
-            Email = usuario.Email,
-            Telefono = usuario.Telefono,
+            Email = DataMasker.Mask(usuario.Email, "email"),
+            Telefono = DataMasker.Mask(usuario.Telefono, "telefono"),
             DebeCambiarInfo = usuario.DebeCambiarInfo,
             CreadoPorId = usuario.CreadoPorId,
             CreatedAt = usuario.CreatedAt,
@@ -266,8 +267,8 @@ public class AuthController : ControllerBase
             Username = u.Username,
             Rol = u.Rol,
             NombreCompleto = u.NombreCompleto,
-            Email = u.Email,
-            Telefono = u.Telefono,
+            Email = DataMasker.Mask(u.Email, "email"),
+            Telefono = DataMasker.Mask(u.Telefono, "telefono"),
             DebeCambiarInfo = u.DebeCambiarInfo,
             CreadoPorId = u.CreadoPorId,
             CreatedAt = u.CreatedAt,

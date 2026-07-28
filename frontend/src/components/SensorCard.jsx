@@ -92,7 +92,7 @@ function CounterWidget({ value, unidad, delta }) {
       </span>
       <span className="text-xs text-text-muted font-medium">{unidad || 'ud'}</span>
       {delta != null && delta > 0 && (
-        <span className="text-[11px] font-mono text-acento">+{delta} en periodo</span>
+        <span className="text-xs font-mono text-acento">+{delta} en periodo</span>
       )}
     </div>
   );
@@ -216,8 +216,8 @@ export default function SensorCard({ sensor, valor, lastSeen, onSensorUpdate }) 
           ) : (
             <>
               <h3 className="truncate text-xs font-semibold text-white" title={getSensorIdentifier(sensorWithAlias)}>{getSensorDisplayName(sensorWithAlias)}</h3>
-              {isCounter && <span className="text-[10px] px-1.5 py-0.5 rounded bg-industrial-green/20 text-industrial-green font-mono">CONT</span>}
-              {isState && <span className="text-[10px] px-1.5 py-0.5 rounded bg-acento/20 text-acento font-mono">DIG</span>}
+              {isCounter && <span className="text-xs px-1.5 py-0.5 rounded bg-industrial-green/20 text-industrial-green font-mono">CONT</span>}
+              {isState && <span className="text-xs px-1.5 py-0.5 rounded bg-acento/20 text-acento font-mono">DIG</span>}
               {isAdmin && (
                 <button
                   onClick={(e) => { e.stopPropagation(); setIsEditing(true); }}
@@ -272,8 +272,8 @@ export default function SensorCard({ sensor, valor, lastSeen, onSensorUpdate }) 
       </div>
 
       <div className="mt-2 pt-2 border-t border-gridline/50 flex items-center justify-between">
-        <p className="truncate text-[11px] text-text-muted font-mono" title={sensor.nombre}>{getSensorIdentifier(sensorWithAlias)}</p>
-        {isStale && <span className="shrink-0 text-[10px] text-industrial-amber/70 font-mono ml-2">{staleLabel}</span>}
+        <p className="truncate text-xs text-text-muted font-mono" title={sensor.nombre}>{getSensorIdentifier(sensorWithAlias)}</p>
+        {isStale && <span className="shrink-0 text-xs text-industrial-amber/70 font-mono ml-2">{staleLabel}</span>}
       </div>
 
       <div className={`absolute bottom-0 left-0 right-0 h-0.5 rounded-b-lg ${
@@ -414,7 +414,7 @@ function SensorDetailModal({ sensor, valor, history, status, onSensorUpdate, onC
       <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-xl border border-gridline bg-panel p-6" aria-labelledby="modal-title" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h2 id="modal-title" className="font-mono text-lg font-bold text-white">{getSensorDisplayName(sensor)}</h2>
+            <h2 id="modal-title" className="font-mono text-xl font-bold text-white">{getSensorDisplayName(sensor)}</h2>
             <p className="text-xs text-text-muted font-mono">{getSensorIdentifier(sensor)} · {sensor.unidad?.nombre} ({sensor.unidad?.simbolo}) · {sensor.tipoDato}</p>
           </div>
           <button onClick={onClose} className="rounded p-1 min-w-[32px] min-h-[32px] flex items-center justify-center text-text-muted hover:bg-cyber-black hover:text-white transition-colors" aria-label="Cerrar">
@@ -424,21 +424,21 @@ function SensorDetailModal({ sensor, valor, history, status, onSensorUpdate, onC
 
         <div className="grid grid-cols-3 gap-3 mb-4">
           <div className="rounded-lg border border-gridline bg-cyber-black p-3">
-            <p className="text-[10px] uppercase tracking-wider text-text-muted">Actual</p>
-            <p className={`font-mono text-xl font-bold ${status === 'warning' ? 'text-industrial-amber' : 'text-acento'}`}>
+            <p className="text-xs uppercase tracking-wider text-text-muted">Actual</p>
+            <p className={`font-mono text-lg font-bold ${status === 'warning' ? 'text-industrial-amber' : 'text-acento'}`}>
               {isState ? (valor === 1 ? 'ON' : valor === 0 ? 'OFF' : '--') : isCounter ? (valor != null ? valor.toLocaleString() : '--') : (valor != null ? valor.toFixed(1) : '--')}
               {!isState && <span className="text-xs text-text-muted"> {sensor.unidad?.simbolo}</span>}
             </p>
           </div>
           <div className="rounded-lg border border-gridline bg-cyber-black p-3">
-            <p className="text-[10px] uppercase tracking-wider text-text-muted">Mín / Máx</p>
-            <p className="font-mono text-xl font-bold text-white">
+            <p className="text-xs uppercase tracking-wider text-text-muted">Mín / Máx</p>
+            <p className="font-mono text-lg font-bold text-white">
               {isState ? '0 / 1' : isCounter ? (min != null ? `${min.toLocaleString()} / ${max.toLocaleString()}` : '--') : (min != null ? `${min.toFixed(1)} / ${max.toFixed(1)}` : '--')}
             </p>
           </div>
           <div className="rounded-lg border border-gridline bg-cyber-black p-3">
-            <p className="text-[10px] uppercase tracking-wider text-text-muted">Promedio</p>
-            <p className="font-mono text-xl font-bold text-white">{isState ? '--' : avg != null ? (isCounter ? avg.toLocaleString() : avg.toFixed(1)) : '--'}</p>
+            <p className="text-xs uppercase tracking-wider text-text-muted">Promedio</p>
+            <p className="font-mono text-lg font-bold text-white">{isState ? '--' : avg != null ? (isCounter ? avg.toLocaleString() : avg.toFixed(1)) : '--'}</p>
           </div>
         </div>
 
@@ -456,7 +456,7 @@ function SensorDetailModal({ sensor, valor, history, status, onSensorUpdate, onC
             }} disabled={!isAdmin || savingAlarm} className="accent-acento" />
           </div>
           {pendingAlarmaOff && (
-            <div className="mb-3 rounded border border-industrial-amber/30 bg-industrial-amber/10 px-3 py-2 text-xs text-industrial-amber">
+            <div className="mb-3 rounded border border-industrial-amber/30 bg-industrial-amber/10 px-3 py-2 text-xs text-industrial-amber leading-relaxed">
               ¿Desactivar la alarma para este sensor? No recibirá notificaciones.
               <div className="flex gap-2 mt-1.5">
                 <button onClick={() => { setAlarmaActiva(false); setPendingAlarmaOff(false); }} className="text-industrial-red hover:text-red-300 font-medium">Sí, desactivar</button>
@@ -478,11 +478,11 @@ function SensorDetailModal({ sensor, valor, history, status, onSensorUpdate, onC
           ) : (
             <div className="flex gap-4">
               <div className="flex-1">
-                <label className="text-[10px] uppercase tracking-wider text-text-muted block mb-1">Rango mínimo</label>
+                <label className="text-xs uppercase tracking-wider text-text-muted block mb-1">Rango mínimo</label>
                 <input type="number" value={rangoMin} onChange={(e) => setRangoMin(e.target.value)} disabled={!isAdmin || savingAlarm} className="w-full rounded border border-gridline bg-cyber-black px-2 py-1 text-xs text-white placeholder:text-text-muted focus:border-acento focus:outline-none" placeholder="Sin límite" />
               </div>
               <div className="flex-1">
-                <label className="text-[10px] uppercase tracking-wider text-text-muted block mb-1">Rango máximo</label>
+                <label className="text-xs uppercase tracking-wider text-text-muted block mb-1">Rango máximo</label>
                 <input type="number" value={rangoMax} onChange={(e) => setRangoMax(e.target.value)} disabled={!isAdmin || savingAlarm} className="w-full rounded border border-gridline bg-cyber-black px-2 py-1 text-xs text-white placeholder:text-text-muted focus:border-acento focus:outline-none" placeholder="Sin límite" />
               </div>
             </div>
@@ -497,11 +497,11 @@ function SensorDetailModal({ sensor, valor, history, status, onSensorUpdate, onC
 
         <div className="mb-4 flex gap-2 items-end">
           <div className="flex-1">
-            <label htmlFor="date-from" className="text-[10px] uppercase tracking-wider text-text-muted block mb-1">Desde</label>
+            <label htmlFor="date-from" className="text-xs uppercase tracking-wider text-text-muted block mb-1">Desde</label>
             <input id="date-from" type="datetime-local" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} aria-label="Fecha desde" className="w-full rounded border border-gridline bg-cyber-black px-2 py-1 text-xs text-white placeholder:text-text-muted focus:border-acento focus:outline-none" />
           </div>
           <div className="flex-1">
-            <label htmlFor="date-to" className="text-[10px] uppercase tracking-wider text-text-muted block mb-1">Hasta</label>
+            <label htmlFor="date-to" className="text-xs uppercase tracking-wider text-text-muted block mb-1">Hasta</label>
             <input id="date-to" type="datetime-local" value={dateTo} onChange={(e) => setDateTo(e.target.value)} aria-label="Fecha hasta" className="w-full rounded border border-gridline bg-cyber-black px-2 py-1 text-xs text-white placeholder:text-text-muted focus:border-acento focus:outline-none" />
           </div>
         </div>
@@ -575,7 +575,7 @@ function SensorDetailModal({ sensor, valor, history, status, onSensorUpdate, onC
           <h3 className="text-sm font-semibold text-white mb-3">Tipo y unidad</h3>
           <div className="flex gap-4">
             <div className="flex-1">
-              <label className="text-[10px] uppercase tracking-wider text-text-muted block mb-1">Tipo de gráfico</label>
+              <label className="text-xs uppercase tracking-wider text-text-muted block mb-1">Tipo de gráfico</label>
               {isState ? (
                 <div className="text-xs text-acento py-1.5">Indicador LED</div>
               ) : isCounter ? (
@@ -589,7 +589,7 @@ function SensorDetailModal({ sensor, valor, history, status, onSensorUpdate, onC
               )}
             </div>
             <div className="flex-1">
-              <label className="text-[10px] uppercase tracking-wider text-text-muted block mb-1">Unidad</label>
+              <label className="text-xs uppercase tracking-wider text-text-muted block mb-1">Unidad</label>
               <select value={unidadId} onChange={(e) => setUnidadId(Number(e.target.value))} disabled={!isAdmin || savingAlarm} className="w-full rounded border border-gridline bg-cyber-black px-2 py-1 text-xs text-white focus:border-acento focus:outline-none">
                 {unidades.map((u) => (
                   <option key={u.id} value={u.id}>{u.nombre} ({u.simbolo})</option>

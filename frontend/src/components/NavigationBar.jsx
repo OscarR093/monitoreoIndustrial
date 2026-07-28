@@ -30,13 +30,13 @@ export default function NavigationBar({
   return (
     <header className="flex flex-wrap items-center justify-between gap-2 bg-panel px-5 py-3 border-b-2 border-acento/20" role="banner">
       <div className="flex items-center gap-2">
-        <h1 className="font-mono text-base font-black text-acento tracking-[0.2em]">SCADA</h1>
+        <h1 className="font-mono text-base font-bold text-acento tracking-[0.2em]">SCADA</h1>
         <span className="h-4 w-px bg-gridline" />
-        <span className="text-[10px] uppercase tracking-widest text-text-muted font-medium">Monitoreo Industrial</span>
+        <span className="text-xs uppercase tracking-widest text-text-muted font-medium hidden sm:inline">Monitoreo Industrial</span>
       </div>
 
       <div className="flex items-center gap-5">
-        <div className={`flex items-center gap-2 rounded-full border px-3 py-1 text-[10px] uppercase tracking-wider font-bold ${status.color}`}>
+        <div className={`flex items-center gap-2 rounded-full border px-3 py-1 text-xs uppercase tracking-wider font-bold ${status.color}`}>
           <StatusIcon size={iconSize.inline} />
           <span>{status.label}</span>
         </div>
@@ -45,7 +45,7 @@ export default function NavigationBar({
           <div className="flex items-center gap-1.5 rounded-full border border-industrial-amber/40 bg-industrial-amber/10 px-3 py-1 animate-alert-pulse">
             <AlertTriangle size={iconSize.inline} className="text-industrial-amber" />
             <span className="font-mono text-xs font-bold text-industrial-amber">{alertCount}</span>
-            <span className="text-[10px] uppercase tracking-wider text-industrial-amber/70">Alertas</span>
+            <span className="text-xs uppercase tracking-wider text-industrial-amber/70">Alertas</span>
           </div>
         )}
 
@@ -61,7 +61,7 @@ export default function NavigationBar({
         <div className="flex items-center gap-3 text-xs">
           {lastUpdate ? (
             <div className="flex items-center gap-1.5">
-              <span className="text-[10px] uppercase tracking-wider text-text-muted">Último dato</span>
+              <span className="text-xs uppercase tracking-wider text-text-muted">Último dato</span>
               <span className="font-mono text-acento font-bold">{lastUpdate.toLocaleTimeString()}</span>
             </div>
           ) : (

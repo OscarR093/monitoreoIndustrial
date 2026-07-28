@@ -37,27 +37,56 @@ const CHANNELS = [
   ]},
 ];
 
+const TABS = [
+  { key: 'account', label: 'Cuenta', icon: UserIcon },
+  { key: 'security', label: 'Seguridad', icon: LockIcon },
+  { key: 'channels', label: 'Canales', icon: BellIcon },
+];
+
 export default function Settings() {
   const { user } = useAuth();
   const isAdmin = user?.rol === 'superadmin' || user?.rol === 'admin';
+  const [tab, setTab] = useState('account');
 
   return (
     <div className="p-6 bg-cyber-black min-h-full">
+      <div className="max-w-2xl mx-auto">
       <h1 className="font-mono text-xl font-bold text-white flex items-center gap-2 mb-6">
         <SettingsIcon size={20} className="text-acento" />
         Configuración
       </h1>
 
-      <div className="space-y-5 max-w-2xl">
-        <ProfileSection icon={UserIcon} />
-        <SecuritySection icon={LockIcon} />
-        {isAdmin && <AlarmChannelsSection icon={BellIcon} />}
+      <div className="flex gap-1 mb-6 border-b border-gridline">
+        {TABS.filter((t) => t.key !== 'channels' || isAdmin).map((t) => {
+          const Icon = t.icon;
+          return (
+            <button
+              key={t.key}
+              onClick={() => setTab(t.key)}
+              className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+                tab === t.key
+                  ? 'border-acento text-acento'
+                  : 'border-transparent text-text-muted hover:text-white hover:border-gridline'
+              }`}
+            >
+              <Icon size={16} />
+              {t.label}
+            </button>
+          );
+        })}
+      </div>
+
+      <div>
+        {tab === 'account' && <ProfileSection />}
+        {tab === 'security' && <SecuritySection />}
+        {tab === 'channels' && isAdmin && <AlarmChannelsSection />}
+      </div>
       </div>
     </div>
   );
 }
 
-function ProfileSection({ icon }) {
+function ProfileSection() {
   const { user, checkSession } = useAuth();
   const [nombre, setNombre] = useState(user?.nombreCompleto || '');
   const [email, setEmail] = useState(user?.email || '');
@@ -65,6 +94,7 @@ function ProfileSection({ icon }) {
   const [currentPassword, setCurrentPassword] = useState('');
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState(null);
+  const [showPwModal, setShowPwModal] = useState(false);
 
   const handleSave = async (e) => {
     e.preventDefault();
@@ -75,6 +105,7 @@ function ProfileSection({ icon }) {
       await api.put('/api/auth/me', { nombreCompleto: nombre, email: email || null, telefono: telefono || null, currentPassword });
       checkSession?.();
       setCurrentPassword('');
+      setShowPwModal(false);
       setMsg({ ok: true, text: 'Perfil actualizado' });
     } catch (err) {
       setMsg({ ok: false, text: err.message });
@@ -85,27 +116,49 @@ function ProfileSection({ icon }) {
   };
 
   return (
-    <Card title="Perfil" icon={icon}>
-      <form onSubmit={handleSave} className="space-y-3">
-        <div className="grid grid-cols-2 gap-3">
-          <Field label="Nombre completo" value={nombre} onChange={setNombre} placeholder="Juan Pérez" />
-          <Field label="Email" value={email} onChange={setEmail} placeholder="juan@miplanta.com" type="email" />
+    <div className="rounded-xl border border-gridline bg-panel p-5 space-y-4">
+      <h2 className="text-sm font-semibold text-white flex items-center gap-2">
+        <UserIcon size={16} className="text-acento" />
+        Información personal
+      </h2>
+      <Field label="Nombre completo" value={nombre} onChange={setNombre} placeholder="Juan Pérez" />
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <Field label="Email" value={email} onChange={setEmail} placeholder="juan@miplanta.com" type="email" />
+        <Field label="Teléfono" value={telefono} onChange={setTelefono} placeholder="+52 123 456 7890" />
+      </div>
+      <button type="button" onClick={() => { setMsg(null); setCurrentPassword(''); setShowPwModal(true); }}
+        className="w-full rounded bg-acento py-2 text-sm font-semibold text-cyber-black hover:bg-acento/80 disabled:opacity-50 transition-colors">
+        Guardar perfil
+      </button>
+      {msg && <p className={`text-xs ${msg.ok ? 'text-industrial-green' : 'text-industrial-red'}`}>{msg.text}</p>}
+
+      {showPwModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" role="dialog" onClick={() => setShowPwModal(false)} onKeyDown={(e) => e.key === 'Escape' && setShowPwModal(false)}>
+          <form onSubmit={handleSave} className="w-full max-w-sm rounded-xl border border-gridline bg-panel p-6" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-sm font-semibold text-white mb-1">Confirmar identidad</h3>
+            <p className="text-xs text-text-muted mb-4">Ingresa tu contraseña actual para guardar los cambios</p>
+            <input type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)}
+              autoFocus className="w-full rounded border border-gridline bg-cyber-black px-3 py-2 text-sm text-white placeholder:text-text-muted focus:border-acento focus:outline-none"
+              placeholder="Contraseña actual" />
+            <div className="flex gap-2 mt-4">
+              <button type="button" onClick={() => setShowPwModal(false)}
+                className="flex-1 rounded border border-gridline bg-cyber-black py-2 text-sm text-text-muted hover:text-white transition-colors">
+                Cancelar
+              </button>
+              <button type="submit" disabled={saving || !currentPassword}
+                className="flex-1 rounded bg-acento py-2 text-sm font-semibold text-cyber-black hover:bg-acento/80 disabled:opacity-50 transition-colors">
+                {saving ? 'Guardando...' : 'Confirmar'}
+              </button>
+            </div>
+            {msg && <p className={`mt-3 text-xs ${msg.ok ? 'text-industrial-green' : 'text-industrial-red'}`}>{msg.text}</p>}
+          </form>
         </div>
-        <div className="grid grid-cols-2 gap-3">
-          <Field label="Teléfono" value={telefono} onChange={setTelefono} placeholder="+52 123 456 7890" />
-          <Field label="Contraseña actual" value={currentPassword} onChange={setCurrentPassword} type="password" placeholder="••••••" />
-        </div>
-        <button type="submit" disabled={saving}
-          className="w-full rounded bg-acento py-2 text-sm font-semibold text-cyber-black hover:bg-acento/80 disabled:opacity-50 transition-colors">
-          {saving ? 'Guardando...' : 'Guardar perfil'}
-        </button>
-      </form>
-      {msg && <p className={`mt-2 text-xs ${msg.ok ? 'text-industrial-green' : 'text-industrial-red'}`}>{msg.text}</p>}
-    </Card>
+      )}
+    </div>
   );
 }
 
-function SecuritySection({ icon }) {
+function SecuritySection() {
   const { user } = useAuth();
   const [currentPw, setCurrentPw] = useState('');
   const [newPw, setNewPw] = useState('');
@@ -169,9 +222,13 @@ function SecuritySection({ icon }) {
   const fm = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 
   return (
-    <Card title="Seguridad" danger icon={icon}>
-      <div className="grid grid-cols-3 gap-3 mb-3">
-        <Field label="Contraseña actual" value={currentPw} onChange={setCurrentPw} type="password" placeholder="••••••" />
+    <div className="rounded-xl border border-industrial-red/20 bg-panel p-5 space-y-4">
+      <h2 className="text-sm font-semibold text-industrial-red flex items-center gap-2">
+        <LockIcon size={16} />
+        Cambiar contraseña
+      </h2>
+      <Field label="Contraseña actual" value={currentPw} onChange={setCurrentPw} type="password" placeholder="••••••" />
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <Field label="Nueva contraseña" value={newPw} onChange={setNewPw} type="password" placeholder="mín. 4 caracteres" />
         <Field label="Confirmar" value={confirmPw} onChange={setConfirmPw} type="password" placeholder="repite la nueva" />
       </div>
@@ -206,12 +263,12 @@ function SecuritySection({ icon }) {
         </div>
       )}
 
-      {msg && <p className={`mt-2 text-xs ${msg.ok ? 'text-industrial-green' : 'text-industrial-red'}`}>{msg.text}</p>}
-    </Card>
+      {msg && <p className={`text-xs ${msg.ok ? 'text-industrial-green' : 'text-industrial-red'}`}>{msg.text}</p>}
+    </div>
   );
 }
 
-function AlarmChannelsSection({ icon }) {
+function AlarmChannelsSection() {
   const [channels, setChannels] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(null);
@@ -231,25 +288,38 @@ function AlarmChannelsSection({ icon }) {
   if (loading) return (
     <div className="rounded-xl border border-gridline bg-panel p-5 animate-pulse">
       <div className="h-5 w-48 bg-gridline/50 rounded mb-4" />
-      <div className="space-y-2"><div className="h-9 bg-gridline/50 rounded" /><div className="h-9 bg-gridline/50 rounded" /></div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        <div className="h-16 bg-gridline/50 rounded-lg" />
+        <div className="h-16 bg-gridline/50 rounded-lg" />
+        <div className="h-16 bg-gridline/50 rounded-lg" />
+        <div className="h-16 bg-gridline/50 rounded-lg" />
+      </div>
     </div>
   );
 
   return (
-    <Card title="Canales de Alarma" icon={icon}>
-      <div className="space-y-2">
+    <div className="rounded-xl border border-gridline bg-panel p-5 space-y-4">
+      <h2 className="text-sm font-semibold text-white flex items-center gap-2">
+        <BellIcon size={16} className="text-acento" />
+        Canales de notificación
+      </h2>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         {CHANNELS.map((ch) => {
           const state = getChannelState(ch.tipo);
           const active = state?.activo || false;
+          const Icon = CHANNEL_ICONS[ch.tipo];
           return (
             <button key={ch.tipo} onClick={() => setModalOpen(ch)}
-              className="w-full flex items-center gap-3 rounded-lg border border-gridline bg-cyber-black px-4 py-3 text-left hover:border-acento/30 transition-colors group">
-              {(() => { const Icon = CHANNEL_ICONS[ch.tipo]; return <Icon size={18} className={`shrink-0 ${active ? 'text-acento' : 'text-text-muted/50 group-hover:text-text-muted'}`} />; })()}
+              className="flex items-center gap-3 rounded-lg border border-gridline bg-cyber-black px-4 py-3 text-left hover:border-acento/30 transition-colors group">
+              <Icon size={20} className={`shrink-0 ${active ? 'text-acento' : 'text-text-muted/40 group-hover:text-text-muted'}`} />
               <div className="flex-1 min-w-0">
-                <p className="text-sm text-white font-medium">{ch.label}</p>
-                <p className="text-[11px] text-text-muted truncate">{ch.desc}</p>
+                <div className="flex items-center gap-2">
+                  <p className="text-sm text-white font-medium">{ch.label}</p>
+                  {active && <span className="text-xs text-industrial-green font-mono">ACTIVO</span>}
+                </div>
+                <p className="text-xs text-text-muted truncate">{ch.desc}</p>
               </div>
-              {active && <span className="text-[10px] text-industrial-green font-mono">ACTIVO</span>}
               <EditIcon size={14} className="text-text-muted/40 group-hover:text-acento shrink-0" />
             </button>
           );
@@ -267,7 +337,7 @@ function AlarmChannelsSection({ icon }) {
             });
           }} />
       )}
-    </Card>
+    </div>
   );
 }
 
@@ -323,11 +393,11 @@ function ChannelModal({ channel, existing, onClose, onSaved }) {
         <div className="space-y-3">
           {channel.fields.map((f) => (
             <div key={f.key}>
-              <label htmlFor={`channel-field-${f.key}`} className="text-[10px] uppercase tracking-wider text-text-muted block mb-1">{f.label}</label>
+              <label htmlFor={`channel-field-${f.key}`} className="text-xs uppercase tracking-wider text-text-muted block mb-1">{f.label}</label>
               <input id={`channel-field-${f.key}`} type={f.key.includes('token') || f.key.includes('Token') || f.key.includes('key') ? 'password' : 'text'}
                 value={fields[f.key] || ''} onChange={(e) => setFields({ ...fields, [f.key]: e.target.value })}
                 placeholder={f.placeholder} className="w-full rounded border border-gridline bg-cyber-black px-3 py-2 text-xs text-white placeholder:text-text-muted focus:border-acento focus:outline-none" />
-              {f.helper && <p className="text-[10px] text-text-muted/60 mt-0.5">{f.helper}</p>}
+              {f.helper && <p className="text-xs text-text-muted/60 mt-0.5">{f.helper}</p>}
             </div>
           ))}
         </div>
@@ -343,31 +413,20 @@ function ChannelModal({ channel, existing, onClose, onSaved }) {
           </button>
         </div>
 
-        {msg && <p className={`mt-2 text-xs ${msg.includes('Error') ? 'text-industrial-red' : 'text-acento'}`}>{msg}</p>}
+        {msg && <p className={`mt-2 text-xs ${msg.includes('Error') ? 'text-industrial-red' : 'text-acento'}`}>{msg.text}</p>}
       </div>
     </div>
   );
 }
 
-function Card({ title, danger, icon: Icon, children }) {
-  return (
-    <div className={`rounded-xl border ${danger ? 'border-industrial-red/20' : 'border-gridline'} bg-panel p-5`}>
-      <h2 className={`text-sm font-semibold mb-4 flex items-center gap-2 ${danger ? 'text-industrial-red' : 'text-white'}`}>
-        {Icon && <Icon size={16} />}
-        {title}
-      </h2>
-      {children}
-    </div>
-  );
-}
-
-function Field({ label, value, onChange, type, placeholder }) {
+function Field({ label, value, onChange, type, placeholder, helper }) {
   const id = `field-${label}`;
   return (
     <div>
-      <label htmlFor={id} className="text-[10px] uppercase tracking-wider text-text-muted block mb-1">{label}</label>
+      <label htmlFor={id} className="text-xs uppercase tracking-wider text-text-muted block mb-1">{label}</label>
       <input id={id} type={type || 'text'} value={value} onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder} className="w-full rounded border border-gridline bg-cyber-black px-3 py-2 text-sm text-white placeholder:text-text-muted focus:border-acento focus:outline-none" />
+      {helper && <p className="text-xs text-text-muted/60 mt-1">{helper}</p>}
     </div>
   );
 }

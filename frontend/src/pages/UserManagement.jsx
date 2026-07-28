@@ -41,7 +41,8 @@ export default function UserManagement() {
 
   return (
     <div className="p-6 bg-cyber-black min-h-full">
-      <h1 className="font-mono text-xl font-bold text-white flex items-center gap-2">
+      <div className="max-w-2xl mx-auto">
+      <h1 className="font-mono text-xl font-bold text-white flex items-center gap-2 mb-6">
         <UsersIcon size={iconSize.header} className="text-acento" />
         Gestión de Usuarios
       </h1>
@@ -52,7 +53,7 @@ export default function UserManagement() {
         </div>
       )}
 
-      <form onSubmit={handleCreate} className="mt-6 flex flex-wrap gap-3 rounded-lg border border-gridline bg-panel p-4">
+      <form onSubmit={handleCreate} className="flex flex-wrap gap-3 rounded-lg border border-gridline bg-panel p-4 items-end">
         <input type="text" value={newUser} onChange={(e) => setNewUser(e.target.value)}
           className="rounded-lg border border-gridline bg-cyber-black px-3 py-2 text-sm text-white placeholder:text-text-muted focus:border-acento focus:outline-none"
           placeholder="Nombre de usuario" aria-label="Nombre de usuario" required />
@@ -69,6 +70,8 @@ export default function UserManagement() {
           Crear Usuario
         </button>
       </form>
+
+      <h2 className="mt-6 mb-3 text-sm font-semibold text-white">Usuarios</h2>
 
       {loading ? (
         <div className="mt-8 flex justify-center">
@@ -121,6 +124,7 @@ export default function UserManagement() {
           </table>
         </div>
       )}
+      </div>
     </div>
   );
 }
