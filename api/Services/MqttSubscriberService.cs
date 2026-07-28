@@ -103,13 +103,7 @@ public class MqttSubscriberService : BackgroundService
 
             foreach (var dato in datos)
             {
-                var sensor = await GuardarDatoSensorAsync(dbContext, plantaCodigo, areaCodigo, dato);
-
-                if (esRealtime && sensor != null)
-                {
-                    try { await alarmService.VerificarAsync(sensor, dato.valor); }
-                    catch (Exception ex) { _logger.LogError(ex, "AlarmService error for sensor {SensorId}", sensor.SensorId); }
-                }
+                await GuardarDatoSensorAsync(dbContext, plantaCodigo, areaCodigo, dato, esRealtime, alarmService);
             }
 
             await dbContext.SaveChangesAsync();
@@ -121,7 +115,7 @@ public class MqttSubscriberService : BackgroundService
         }
     }
 
-    private async Task<Sensor?> GuardarDatoSensorAsync(AppDbContext dbContext, string plantaCodigo, string areaCodigo, DatoSensorMessage dato)
+    private async Task GuardarDatoSensorAsync(AppDbContext dbContext, string plantaCodigo, string areaCodigo, DatoSensorMessage dato, bool guardarDato, AlarmService alarmService)
     {
         var area = await dbContext.Areas
             .Include(a => a.Planta)
@@ -130,7 +124,7 @@ public class MqttSubscriberService : BackgroundService
         if (area == null)
         {
             _logger.LogWarning("Area not found: {Planta}/{Area}", plantaCodigo, areaCodigo);
-            return null;
+            return;
         }
 
         var sensor = await dbContext.Sensores
@@ -168,16 +162,20 @@ public class MqttSubscriberService : BackgroundService
             _logger.LogInformation("Auto-created sensor: {SensorId} (tipo: {Tipo}, modo: {Modo})", dato.sensor, dato.tipo, dato.modo);
         }
 
-        var datoSensor = new DatoSensor
+        if (guardarDato)
         {
-            SensorId = sensor.Id,
-            Valor = dato.valor,
-            Cambios = dato.cambios,
-            Timestamp = (long)dato.timestamp
-        };
+            var datoSensor = new DatoSensor
+            {
+                SensorId = sensor.Id,
+                Valor = dato.valor,
+                Cambios = dato.cambios,
+                Timestamp = (long)dato.timestamp
+            };
+            dbContext.DatosSensores.Add(datoSensor);
 
-        dbContext.DatosSensores.Add(datoSensor);
-        return sensor;
+            try { await alarmService.VerificarAsync(sensor, dato.valor); }
+            catch (Exception ex) { _logger.LogError(ex, "AlarmService error for sensor {SensorId}", sensor.SensorId); }
+        }
     }
 
     public override async Task StopAsync(CancellationToken cancellationToken)

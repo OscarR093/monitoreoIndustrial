@@ -15,8 +15,21 @@ export default function NavigationBar({
   const [time, setTime] = useState(new Date());
 
   useEffect(() => {
-    const timer = setInterval(() => setTime(new Date()), 1000);
-    return () => clearInterval(timer);
+    let timer;
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') {
+        setTime(new Date());
+        timer = setInterval(() => setTime(new Date()), 1000);
+      } else if (timer) {
+        clearInterval(timer);
+      }
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    onVisible();
+    return () => {
+      if (timer) clearInterval(timer);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
   }, []);
 
   const statusConfig = {

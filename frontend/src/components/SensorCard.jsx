@@ -1,5 +1,5 @@
-import { useEffect, useState, useMemo } from 'react';
-import { LineChart, Line, AreaChart, Area, PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, ResponsiveContainer } from 'recharts';
+import { useEffect, useState, useMemo, memo } from 'react';
+import { LineChart, Line, AreaChart, Area, PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { api } from '../services/api';
 import { icons, iconSize } from '../services/icons';
 import { useAuth } from '../context/AuthContext';
@@ -14,7 +14,7 @@ const ZapIcon = icons.voltage;
 const XIcon = icons.close;
 const EditIcon = icons.edit;
 
-function Sparkline({ data }) {
+const Sparkline = memo(function Sparkline({ data }) {
   if (!data || data.length < 2) {
     return <div className="h-32 flex items-center justify-center text-xs text-text-muted/50">sin historial</div>;
   }
@@ -33,9 +33,9 @@ function Sparkline({ data }) {
       </AreaChart>
     </ResponsiveContainer>
   );
-}
+});
 
-function MiniGauge({ value, max }) {
+const MiniGauge = memo(function MiniGauge({ value, max }) {
   const pct = Math.min(Math.max((value || 0) / (max || 100), 0), 1);
   const data = [
     { name: 'value', value: pct || 0.001 },
@@ -51,9 +51,9 @@ function MiniGauge({ value, max }) {
       </PieChart>
     </ResponsiveContainer>
   );
-}
+});
 
-function MiniBar({ data }) {
+const MiniBar = memo(function MiniBar({ data }) {
   if (!data || data.length === 0) {
     return <div className="h-32 flex items-center justify-center text-xs text-text-muted/50">sin historial</div>;
   }
@@ -66,9 +66,9 @@ function MiniBar({ data }) {
       </BarChart>
     </ResponsiveContainer>
   );
-}
+});
 
-function DigitalIndicator({ value }) {
+const DigitalIndicator = memo(function DigitalIndicator({ value }) {
   const isOn = value === 1;
   return (
     <div className="flex flex-col items-center justify-center h-32 gap-2">
@@ -82,9 +82,9 @@ function DigitalIndicator({ value }) {
       </span>
     </div>
   );
-}
+});
 
-function CounterWidget({ value, unidad, delta }) {
+const CounterWidget = memo(function CounterWidget({ value, unidad, delta }) {
   return (
     <div className="flex flex-col items-center justify-center h-32 gap-1">
       <span className="font-mono text-[32px] font-bold text-white leading-none tabular-nums">
@@ -96,14 +96,14 @@ function CounterWidget({ value, unidad, delta }) {
       )}
     </div>
   );
-}
+});
 
 const STATUS = {
   normal: 'border-l-industrial-green',
   warning: 'border-l-industrial-amber bg-industrial-amber/[0.06]',
 };
 
-export default function SensorCard({ sensor, valor, lastSeen, onSensorUpdate }) {
+const SensorCard = memo(function SensorCard({ sensor, valor, lastSeen, onSensorUpdate }) {
   const { user } = useAuth();
   const showToast = useToast();
   const isAdmin = user?.rol === 'superadmin' || user?.rol === 'admin';
@@ -156,10 +156,10 @@ export default function SensorCard({ sensor, valor, lastSeen, onSensorUpdate }) 
     return 'normal';
   }, [valor, isDigital, isState, isCounter, sensor]);
 
-  const chartData = history.map((d) => ({
+  const chartData = useMemo(() => history.map((d) => ({
     valor: parseFloat(d.valor),
     timestamp: d.timestamp,
-  }));
+  })), [history]);
 
   const tipoId = sensor.tipoGraficoId || 1;
 
@@ -284,7 +284,9 @@ export default function SensorCard({ sensor, valor, lastSeen, onSensorUpdate }) 
     {isOpen && <SensorDetailModal sensor={sensorWithAlias} valor={valor} history={history} status={status} onSensorUpdate={onSensorUpdate} onClose={() => setIsOpen(false)} />}
     </>
   );
-}
+});
+
+export default SensorCard;
 
 function SensorDetailModal({ sensor, valor, history, status, onSensorUpdate, onClose }) {
   const { user } = useAuth();
@@ -317,6 +319,12 @@ function SensorDetailModal({ sensor, valor, history, status, onSensorUpdate, onC
   const [newUnidadNombre, setNewUnidadNombre] = useState('');
   const [newUnidadSimbolo, setNewUnidadSimbolo] = useState('');
   const [pendingAlarmaOff, setPendingAlarmaOff] = useState(false);
+  const [tab, setTab] = useState('diagnostico');
+
+  useEffect(() => {
+    setRangoMin(sensor.rangoMinimo ?? '');
+    setRangoMax(sensor.rangoMaximo ?? '');
+  }, [sensor.rangoMinimo, sensor.rangoMaximo]);
 
   const loadUnidades = () => {
     api.get('/api/unidades').then(setUnidades).catch(() => {});
@@ -402,6 +410,7 @@ function SensorDetailModal({ sensor, valor, history, status, onSensorUpdate, onC
           alarmaEnOff: alarmaOff,
         });
       }
+      showToast('Configuración guardada', 'success');
     } catch (err) {
       showToast(err.message);
     } finally {
@@ -409,207 +418,248 @@ function SensorDetailModal({ sensor, valor, history, status, onSensorUpdate, onC
     }
   };
 
+  const hasAlarm = alarmaActiva || sensor.alarmaActiva;
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" role="dialog" onClick={onClose} onKeyDown={(e) => e.key === 'Escape' && onClose()}>
       <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-xl border border-gridline bg-panel p-6" aria-labelledby="modal-title" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-4">
           <div>
             <h2 id="modal-title" className="font-mono text-xl font-bold text-white">{getSensorDisplayName(sensor)}</h2>
-            <p className="text-xs text-text-muted font-mono">{getSensorIdentifier(sensor)} · {sensor.unidad?.nombre} ({sensor.unidad?.simbolo}) · {sensor.tipoDato}</p>
+            <p className="text-xs text-text-muted font-mono">{getSensorIdentifier(sensor)} · {sensor.unidad?.nombre} ({sensor.unidad?.simbolo})</p>
           </div>
           <button onClick={onClose} className="rounded p-1 min-w-[32px] min-h-[32px] flex items-center justify-center text-text-muted hover:bg-cyber-black hover:text-white transition-colors" aria-label="Cerrar">
             <XIcon size={20} />
           </button>
         </div>
 
-        <div className="grid grid-cols-3 gap-3 mb-4">
-          <div className="rounded-lg border border-gridline bg-cyber-black p-3">
-            <p className="text-xs uppercase tracking-wider text-text-muted">Actual</p>
-            <p className={`font-mono text-lg font-bold ${status === 'warning' ? 'text-industrial-amber' : 'text-acento'}`}>
-              {isState ? (valor === 1 ? 'ON' : valor === 0 ? 'OFF' : '--') : isCounter ? (valor != null ? valor.toLocaleString() : '--') : (valor != null ? valor.toFixed(1) : '--')}
-              {!isState && <span className="text-xs text-text-muted"> {sensor.unidad?.simbolo}</span>}
-            </p>
-          </div>
-          <div className="rounded-lg border border-gridline bg-cyber-black p-3">
-            <p className="text-xs uppercase tracking-wider text-text-muted">Mín / Máx</p>
-            <p className="font-mono text-lg font-bold text-white">
-              {isState ? '0 / 1' : isCounter ? (min != null ? `${min.toLocaleString()} / ${max.toLocaleString()}` : '--') : (min != null ? `${min.toFixed(1)} / ${max.toFixed(1)}` : '--')}
-            </p>
-          </div>
-          <div className="rounded-lg border border-gridline bg-cyber-black p-3">
-            <p className="text-xs uppercase tracking-wider text-text-muted">Promedio</p>
-            <p className="font-mono text-lg font-bold text-white">{isState ? '--' : avg != null ? (isCounter ? avg.toLocaleString() : avg.toFixed(1)) : '--'}</p>
-          </div>
+        <div className="flex gap-1 mb-4 border-b border-gridline">
+          {[
+            { key: 'diagnostico', label: 'Diagnóstico' },
+            { key: 'historial', label: 'Historial' },
+            ...(isAdmin ? [{ key: 'configuracion', label: 'Configuración' }] : []),
+          ].map((t) => (
+            <button key={t.key} onClick={() => setTab(t.key)}
+              className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                tab === t.key ? 'border-acento text-acento' : 'border-transparent text-text-muted hover:text-white hover:border-gridline'
+              }`}
+            >{t.label}</button>
+          ))}
         </div>
 
-        <div className="rounded-lg border border-gridline bg-cyber-black p-4 mb-4">
-          <h3 className="text-sm font-semibold text-white mb-3">Configuración de Alarma</h3>
-          <div className="flex items-center gap-2 mb-3">
-            <label htmlFor="alarma-activa" className="text-xs text-text-muted">Alarma activa</label>
-            <input id="alarma-activa" type="checkbox" checked={alarmaActiva} onChange={(e) => {
-              if (!e.target.checked && sensor.alarmaActiva) {
-                setPendingAlarmaOff(true);
-              } else {
-                setAlarmaActiva(e.target.checked);
-                setPendingAlarmaOff(false);
-              }
-            }} disabled={!isAdmin || savingAlarm} className="accent-acento" />
-          </div>
-          {pendingAlarmaOff && (
-            <div className="mb-3 rounded border border-industrial-amber/30 bg-industrial-amber/10 px-3 py-2 text-xs text-industrial-amber leading-relaxed">
-              ¿Desactivar la alarma para este sensor? No recibirá notificaciones.
-              <div className="flex gap-2 mt-1.5">
-                <button onClick={() => { setAlarmaActiva(false); setPendingAlarmaOff(false); }} className="text-industrial-red hover:text-red-300 font-medium">Sí, desactivar</button>
-                <button onClick={() => setPendingAlarmaOff(false)} className="text-text-muted hover:text-white">Cancelar</button>
+        {tab === 'diagnostico' && (
+          <div className="space-y-4">
+            <div className="rounded-lg border border-gridline bg-cyber-black p-4">
+              <p className="text-xs uppercase tracking-wider text-text-muted mb-1">Valor actual</p>
+              <p className={`font-mono text-[32px] font-bold tabular-nums leading-none ${status === 'warning' ? 'text-industrial-amber' : 'text-white'}`}>
+                {isState ? (valor === 1 ? 'ON' : valor === 0 ? 'OFF' : '--') : isCounter ? (valor != null ? valor.toLocaleString() : '--') : (valor != null ? valor.toFixed(1) : '--')}
+              </p>
+              {!isState && <span className="text-sm text-text-muted">{sensor.unidad?.simbolo}</span>}
+            </div>
+
+            <div className="grid grid-cols-3 gap-3">
+              <div className="rounded-lg border border-gridline bg-cyber-black p-3 text-center">
+                <p className="text-xs uppercase tracking-wider text-text-muted">Mín</p>
+                <p className="font-mono text-lg font-bold text-white">{isState ? '0' : min != null ? (isCounter ? min.toLocaleString() : min.toFixed(1)) : '--'}</p>
+              </div>
+              <div className="rounded-lg border border-gridline bg-cyber-black p-3 text-center">
+                <p className="text-xs uppercase tracking-wider text-text-muted">Promedio</p>
+                <p className="font-mono text-lg font-bold text-white">{isState ? '--' : avg != null ? (isCounter ? avg.toLocaleString() : avg.toFixed(1)) : '--'}</p>
+              </div>
+              <div className="rounded-lg border border-gridline bg-cyber-black p-3 text-center">
+                <p className="text-xs uppercase tracking-wider text-text-muted">Máx</p>
+                <p className="font-mono text-lg font-bold text-white">{isState ? '1' : max != null ? (isCounter ? max.toLocaleString() : max.toFixed(1)) : '--'}</p>
               </div>
             </div>
-          )}
-          {isState ? (
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <input id="alarma-on" type="checkbox" checked={alarmaOn} onChange={(e) => { setAlarmaOn(e.target.checked); if (e.target.checked) setAlarmaOff(false); }} disabled={!isAdmin || savingAlarm} className="accent-acento" />
-                <label htmlFor="alarma-on" className="text-xs text-text-muted">Alarma en ON (valor = 1)</label>
-              </div>
-              <div className="flex items-center gap-2">
-                <input id="alarma-off" type="checkbox" checked={alarmaOff} onChange={(e) => { setAlarmaEnOff(e.target.checked); if (e.target.checked) setAlarmaOn(false); }} disabled={!isAdmin || savingAlarm} className="accent-acento" />
-                <label htmlFor="alarma-off" className="text-xs text-text-muted">Alarma en OFF (valor = 0)</label>
-              </div>
-            </div>
-          ) : (
-            <div className="flex gap-4">
-              <div className="flex-1">
-                <label className="text-xs uppercase tracking-wider text-text-muted block mb-1">Rango mínimo</label>
-                <input type="number" value={rangoMin} onChange={(e) => setRangoMin(e.target.value)} disabled={!isAdmin || savingAlarm} className="w-full rounded border border-gridline bg-cyber-black px-2 py-1 text-xs text-white placeholder:text-text-muted focus:border-acento focus:outline-none" placeholder="Sin límite" />
-              </div>
-              <div className="flex-1">
-                <label className="text-xs uppercase tracking-wider text-text-muted block mb-1">Rango máximo</label>
-                <input type="number" value={rangoMax} onChange={(e) => setRangoMax(e.target.value)} disabled={!isAdmin || savingAlarm} className="w-full rounded border border-gridline bg-cyber-black px-2 py-1 text-xs text-white placeholder:text-text-muted focus:border-acento focus:outline-none" placeholder="Sin límite" />
-              </div>
-            </div>
-          )}
-        </div>
 
-        {isAdmin && (
-          <button onClick={handleSaveAlarm} disabled={savingAlarm} className="w-full rounded bg-acento/20 px-4 py-2 text-sm text-acento hover:bg-acento/30 disabled:opacity-50 mb-4">
-            {savingAlarm ? 'Guardando...' : 'Guardar configuración'}
-          </button>
-        )}
-
-        <div className="mb-4 flex gap-2 items-end">
-          <div className="flex-1">
-            <label htmlFor="date-from" className="text-xs uppercase tracking-wider text-text-muted block mb-1">Desde</label>
-            <input id="date-from" type="datetime-local" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} aria-label="Fecha desde" className="w-full rounded border border-gridline bg-cyber-black px-2 py-1 text-xs text-white placeholder:text-text-muted focus:border-acento focus:outline-none" />
-          </div>
-          <div className="flex-1">
-            <label htmlFor="date-to" className="text-xs uppercase tracking-wider text-text-muted block mb-1">Hasta</label>
-            <input id="date-to" type="datetime-local" value={dateTo} onChange={(e) => setDateTo(e.target.value)} aria-label="Fecha hasta" className="w-full rounded border border-gridline bg-cyber-black px-2 py-1 text-xs text-white placeholder:text-text-muted focus:border-acento focus:outline-none" />
-          </div>
-        </div>
-
-        {isState ? (
-          <div className="mb-4 rounded-lg border border-gridline bg-cyber-black p-2 max-h-48 overflow-y-auto">
-            <table className="w-full text-xs">
-              <thead>
-                <tr className="text-text-muted border-b border-gridline">
-                  <th className="p-1.5 text-left">Timestamp</th>
-                  <th className="p-1.5 text-left">Estado</th>
-                  <th className="p-1.5 text-right">Cambios</th>
-                </tr>
-              </thead>
-              <tbody>
-                {displayHistory.map((d) => (
-                  <tr key={d.timestamp} className="border-b border-gridline/30">
-                    <td className="p-1.5 font-mono text-text-muted">{new Date(d.timestamp * 1000).toLocaleString()}</td>
-                    <td className="p-1.5">
-                      <span className={`px-1.5 py-0.5 rounded text-[10px] font-mono ${d.valor === 1 ? 'bg-industrial-green/20 text-industrial-green' : 'bg-gridline/30 text-text-muted'}`}>
-                        {d.valor === 1 ? 'ON' : 'OFF'}
-                      </span>
-                    </td>
-                    <td className="p-1.5 font-mono text-right text-acento">{d.cambios ?? 0}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : isCounter && dailyData && dailyData.length > 0 ? (
-          <div className="h-48 rounded-lg border border-gridline bg-cyber-black p-2 mb-4">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={dailyData.map(d => ({ dia: d.dia, total: d.total }))} margin={{ top: 8, right: 8, bottom: 8, left: 0 }}>
-                <XAxis dataKey="dia" tick={{ fill: CHART_COLORS.muted, fontSize: 10 }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fill: CHART_COLORS.muted, fontSize: 10 }} axisLine={false} tickLine={false} />
-                <Bar dataKey="total" fill={CHART_COLORS.accent} radius={[2, 2, 0, 0]} maxBarSize={32} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        ) : isCounter ? (
-          <div className="h-48 rounded-lg border border-gridline bg-cyber-black p-2 mb-4">
-            {chartData.length > 1 ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData} margin={{ top: 8, right: 8, bottom: 8, left: 0 }}>
-                  <XAxis dataKey="timestamp" hide />
-                  <YAxis domain={['auto', 'auto']} tick={{ fill: CHART_COLORS.muted, fontSize: 10 }} axisLine={false} tickLine={false} />
-                  <Bar dataKey="valor" fill={CHART_COLORS.accent} radius={[2, 2, 0, 0]} maxBarSize={16} />
-                </BarChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="flex h-full items-center justify-center text-sm text-text-muted">Sin datos históricos</div>
-            )}
-          </div>
-        ) : (
-          <div className="h-48 rounded-lg border border-gridline bg-cyber-black p-2 mb-4">
-            {chartData.length > 1 ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={chartData} margin={{ top: 8, right: 8, bottom: 8, left: 0 }}>
-                  <XAxis dataKey="timestamp" hide />
-                  <YAxis domain={['auto', 'auto']} tick={{ fill: CHART_COLORS.muted, fontSize: 10 }} axisLine={false} tickLine={false} />
-                  <Line type="monotone" dataKey="valor" stroke={CHART_COLORS.accent} strokeWidth={2} dot={false} />
-                </LineChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="flex h-full items-center justify-center text-sm text-text-muted">Sin datos históricos</div>
-            )}
-          </div>
-        )}
-
-        <div className="rounded-lg border border-gridline bg-cyber-black p-4 mb-4">
-          <h3 className="text-sm font-semibold text-white mb-3">Tipo y unidad</h3>
-          <div className="flex gap-4">
-            <div className="flex-1">
-              <label className="text-xs uppercase tracking-wider text-text-muted block mb-1">Tipo de gráfico</label>
-              {isState ? (
-                <div className="text-xs text-acento py-1.5">Indicador LED</div>
-              ) : isCounter ? (
-                <div className="text-xs text-industrial-green py-1.5">Barras diarias</div>
+            <div className="rounded-lg border border-gridline bg-cyber-black p-4">
+              <h3 className="text-xs uppercase tracking-wider text-text-muted mb-2">Estado de alarma</h3>
+              {hasAlarm ? (
+                <div className="space-y-1 text-xs">
+                  <p className="text-white">Alarma <span className={alarmaActiva ? 'text-industrial-green' : 'text-text-muted'}>{alarmaActiva ? 'activa' : 'inactiva'}</span></p>
+                  {!isState && sensor.rangoMinimo != null && sensor.rangoMaximo != null && (
+                    <p className="text-text-muted">Rango: {sensor.rangoMinimo} – {sensor.rangoMaximo} {sensor.unidad?.simbolo}</p>
+                  )}
+                  {isState && (
+                    <p className="text-text-muted">Notifica en: {[sensor.alarmaEnOn && 'ON', sensor.alarmaEnOff && 'OFF'].filter(Boolean).join(', ') || '—'}</p>
+                  )}
+                </div>
               ) : (
-                <select value={tipoGraficoId} onChange={(e) => setTipoGraficoId(Number(e.target.value))} disabled={!isAdmin || savingAlarm} className="w-full rounded border border-gridline bg-cyber-black px-2 py-1 text-xs text-white focus:border-acento focus:outline-none">
-                  {tipoGraficos.map((t) => (
-                    <option key={t.id} value={t.id}>{t.nombre} ({t.widget})</option>
-                  ))}
-                </select>
+                <p className="text-xs text-text-muted">Sin alarma configurada</p>
               )}
             </div>
-            <div className="flex-1">
-              <label className="text-xs uppercase tracking-wider text-text-muted block mb-1">Unidad</label>
-              <select value={unidadId} onChange={(e) => setUnidadId(Number(e.target.value))} disabled={!isAdmin || savingAlarm} className="w-full rounded border border-gridline bg-cyber-black px-2 py-1 text-xs text-white focus:border-acento focus:outline-none">
-                {unidades.map((u) => (
-                  <option key={u.id} value={u.id}>{u.nombre} ({u.simbolo})</option>
-                ))}
-              </select>
+
+            <p className="text-xs text-text-muted text-right">{displayHistory.length} datos · {dateFrom.slice(0, 10)} – {dateTo.slice(0, 10)}</p>
+          </div>
+        )}
+
+        {tab === 'historial' && (
+          <div className="space-y-4">
+            <div className="flex gap-2 items-end">
+              <div className="flex-1">
+                <label htmlFor="date-from" className="text-xs uppercase tracking-wider text-text-muted block mb-1">Desde</label>
+                <input id="date-from" type="datetime-local" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} aria-label="Fecha desde" className="w-full rounded border border-gridline bg-cyber-black px-2 py-1 text-xs text-white placeholder:text-text-muted focus:border-acento focus:outline-none" />
+              </div>
+              <div className="flex-1">
+                <label htmlFor="date-to" className="text-xs uppercase tracking-wider text-text-muted block mb-1">Hasta</label>
+                <input id="date-to" type="datetime-local" value={dateTo} onChange={(e) => setDateTo(e.target.value)} aria-label="Fecha hasta" className="w-full rounded border border-gridline bg-cyber-black px-2 py-1 text-xs text-white placeholder:text-text-muted focus:border-acento focus:outline-none" />
+              </div>
+            </div>
+
+            {!isState && chartData.length > 0 && (
+              <div className="h-56 rounded-lg border border-gridline bg-cyber-black p-2">
+                <ResponsiveContainer width="100%" height="100%">
+                  {isCounter && dailyData && dailyData.length > 0 ? (
+                    <BarChart data={dailyData.map(d => ({ dia: d.dia, total: d.total }))} margin={{ top: 8, right: 12, bottom: 8, left: 0 }}>
+                      <XAxis dataKey="dia" tick={{ fill: CHART_COLORS.muted, fontSize: 10 }} axisLine={false} tickLine={false} />
+                      <YAxis tick={{ fill: CHART_COLORS.muted, fontSize: 10 }} axisLine={false} tickLine={false} width={40} />
+                      <Tooltip contentStyle={{ background: '#111714', border: '1px solid #1A1F1C', borderRadius: 6, fontSize: 12 }} labelStyle={{ color: '#787C7A' }} />
+                      <Bar dataKey="total" fill={CHART_COLORS.accent} radius={[2, 2, 0, 0]} maxBarSize={32} />
+                    </BarChart>
+                  ) : (
+                    <LineChart data={chartData} margin={{ top: 8, right: 12, bottom: 8, left: 0 }}>
+                      <XAxis dataKey="timestamp" hide />
+                      <YAxis tick={{ fill: CHART_COLORS.muted, fontSize: 10 }} axisLine={false} tickLine={false} width={40} domain={['auto', 'auto']} />
+                      <Tooltip contentStyle={{ background: '#111714', border: '1px solid #1A1F1C', borderRadius: 6, fontSize: 12 }} labelStyle={{ color: '#787C7A' }} labelFormatter={(ts) => new Date(ts * 1000).toLocaleString()} />
+                      <Line type="monotone" dataKey="valor" stroke={CHART_COLORS.accent} strokeWidth={2} dot={chartData.length < 20} />
+                    </LineChart>
+                  )}
+                </ResponsiveContainer>
+              </div>
+            )}
+            {!isState && chartData.length === 0 && (
+              <div className="h-20 rounded-lg border border-gridline bg-cyber-black flex items-center justify-center">
+                <p className="text-xs text-text-muted">Sin datos para graficar en este período</p>
+              </div>
+            )}
+
+            <div className="rounded-lg border border-gridline bg-cyber-black max-h-64 overflow-y-auto">
+              <table className="w-full text-xs">
+                <thead className="sticky top-0 bg-cyber-black">
+                  <tr className="text-text-muted border-b border-gridline">
+                    <th className="p-2 text-left font-medium">Timestamp</th>
+                    <th className="p-2 text-right font-medium">{isState ? 'Estado' : `Valor${sensor.unidad?.simbolo ? ' (' + sensor.unidad.simbolo + ')' : ''}`}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {displayHistory.length === 0 ? (
+                    <tr><td colSpan={2} className="p-4 text-center text-text-muted">Sin datos en este período</td></tr>
+                  ) : (
+                    displayHistory.slice(0, 100).map((d) => (
+                      <tr key={d.timestamp} className="border-b border-gridline/30 hover:bg-panel/30">
+                        <td className="p-2 font-mono text-text-muted whitespace-nowrap">{new Date(d.timestamp * 1000).toLocaleString()}</td>
+                        <td className="p-2 font-mono text-right text-white tabular-nums whitespace-nowrap">
+                          {isState ? (
+                            <span className={`px-1.5 py-0.5 rounded text-[10px] ${d.valor === 1 ? 'bg-industrial-green/20 text-industrial-green' : 'bg-gridline/30 text-text-muted'}`}>
+                              {d.valor === 1 ? 'ON' : 'OFF'}
+                            </span>
+                          ) : (
+                            isCounter ? Number(d.valor).toLocaleString() : Number(d.valor).toFixed(1)
+                          )}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
             </div>
           </div>
-          {isAdmin && (
-            showNewUnidad ? (
-              <div className="flex items-end gap-2 mt-2">
-                <input type="text" value={newUnidadNombre} onChange={(e) => setNewUnidadNombre(e.target.value)} placeholder="Nombre" aria-label="Nombre de la unidad" className="flex-1 rounded border border-gridline bg-cyber-black px-2 py-1 text-xs text-white placeholder:text-text-muted focus:border-acento focus:outline-none" />
-                <input type="text" value={newUnidadSimbolo} onChange={(e) => setNewUnidadSimbolo(e.target.value)} placeholder="Símbolo" aria-label="Símbolo de la unidad" className="w-20 rounded border border-gridline bg-cyber-black px-2 py-1 text-xs text-white placeholder:text-text-muted focus:border-acento focus:outline-none" />
-                <button onClick={handleAddUnidad} className="text-acento hover:text-white text-xs">Crear</button>
-                <button onClick={() => setShowNewUnidad(false)} className="text-text-muted hover:text-white text-xs">Cancelar</button>
+        )}
+
+        {tab === 'configuracion' && isAdmin && (
+          <div className="space-y-4">
+            <div className="rounded-lg border border-gridline bg-cyber-black p-4">
+              <h3 className="text-sm font-semibold text-white mb-3">Alarma</h3>
+              <div className="flex items-center gap-2 mb-3">
+                <label htmlFor="alarma-activa" className="text-xs text-text-muted">Alarma activa</label>
+                <input id="alarma-activa" type="checkbox" checked={alarmaActiva} onChange={(e) => {
+                  if (!e.target.checked && sensor.alarmaActiva) {
+                    setPendingAlarmaOff(true);
+                  } else {
+                    setAlarmaActiva(e.target.checked);
+                    setPendingAlarmaOff(false);
+                  }
+                }} disabled={savingAlarm} className="accent-acento" />
               </div>
-            ) : (
-              <button onClick={() => setShowNewUnidad(true)} className="mt-2 text-xs text-acento hover:text-white">+ Nueva unidad</button>
-            )
-          )}
-        </div>
+              {pendingAlarmaOff && (
+                <div className="mb-3 rounded border border-industrial-amber/30 bg-industrial-amber/10 px-3 py-2 text-xs text-industrial-amber leading-relaxed">
+                  ¿Desactivar la alarma para este sensor?
+                  <div className="flex gap-2 mt-1.5">
+                    <button onClick={() => { setAlarmaActiva(false); setPendingAlarmaOff(false); }} className="text-industrial-red hover:text-red-300 font-medium">Sí, desactivar</button>
+                    <button onClick={() => setPendingAlarmaOff(false)} className="text-text-muted hover:text-white">Cancelar</button>
+                  </div>
+                </div>
+              )}
+              {isState ? (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <input id="alarma-on" type="checkbox" checked={alarmaOn} onChange={(e) => { setAlarmaOn(e.target.checked); if (e.target.checked) setAlarmaOff(false); }} disabled={savingAlarm} className="accent-acento" />
+                    <label htmlFor="alarma-on" className="text-xs text-text-muted">Alarma en ON (valor = 1)</label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input id="alarma-off" type="checkbox" checked={alarmaOff} onChange={(e) => { setAlarmaEnOff(e.target.checked); if (e.target.checked) setAlarmaOn(false); }} disabled={savingAlarm} className="accent-acento" />
+                    <label htmlFor="alarma-off" className="text-xs text-text-muted">Alarma en OFF (valor = 0)</label>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex gap-4">
+                  <div className="flex-1 relative">
+                    <label className="text-xs uppercase tracking-wider text-text-muted block mb-1">Rango mínimo</label>
+                    <input type="number" value={rangoMin} onChange={(e) => setRangoMin(e.target.value)} disabled={savingAlarm} className="w-full rounded border border-gridline bg-cyber-black px-2 py-1 pr-6 text-xs text-white placeholder:text-text-muted focus:border-acento focus:outline-none" placeholder="Sin límite" />
+                    {rangoMin !== '' && !savingAlarm && (
+                      <button type="button" onClick={() => setRangoMin('')} className="absolute right-1.5 top-[22px] text-text-muted hover:text-white text-xs" title="Quitar límite">×</button>
+                    )}
+                  </div>
+                  <div className="flex-1 relative">
+                    <label className="text-xs uppercase tracking-wider text-text-muted block mb-1">Rango máximo</label>
+                    <input type="number" value={rangoMax} onChange={(e) => setRangoMax(e.target.value)} disabled={savingAlarm} className="w-full rounded border border-gridline bg-cyber-black px-2 py-1 pr-6 text-xs text-white placeholder:text-text-muted focus:border-acento focus:outline-none" placeholder="Sin límite" />
+                    {rangoMax !== '' && !savingAlarm && (
+                      <button type="button" onClick={() => setRangoMax('')} className="absolute right-1.5 top-[22px] text-text-muted hover:text-white text-xs" title="Quitar límite">×</button>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="rounded-lg border border-gridline bg-cyber-black p-4">
+              <h3 className="text-sm font-semibold text-white mb-3">Tipo y unidad</h3>
+              <div className="flex gap-4">
+                <div className="flex-1">
+                  <label className="text-xs uppercase tracking-wider text-text-muted block mb-1">Tipo de gráfico</label>
+                  {isState ? (
+                    <div className="text-xs text-acento py-1.5">Indicador LED</div>
+                  ) : isCounter ? (
+                    <div className="text-xs text-industrial-green py-1.5">Barras diarias</div>
+                  ) : (
+                    <select value={tipoGraficoId} onChange={(e) => setTipoGraficoId(Number(e.target.value))} disabled={savingAlarm} className="w-full rounded border border-gridline bg-cyber-black px-2 py-1 text-xs text-white focus:border-acento focus:outline-none">
+                      {tipoGraficos.map((t) => (<option key={t.id} value={t.id}>{t.nombre} ({t.widget})</option>))}
+                    </select>
+                  )}
+                </div>
+                <div className="flex-1">
+                  <label className="text-xs uppercase tracking-wider text-text-muted block mb-1">Unidad</label>
+                  <select value={unidadId} onChange={(e) => setUnidadId(Number(e.target.value))} disabled={savingAlarm} className="w-full rounded border border-gridline bg-cyber-black px-2 py-1 text-xs text-white focus:border-acento focus:outline-none">
+                    {unidades.map((u) => (<option key={u.id} value={u.id}>{u.nombre} ({u.simbolo})</option>))}
+                  </select>
+                </div>
+              </div>
+              {showNewUnidad ? (
+                <div className="flex items-end gap-2 mt-2">
+                  <input type="text" value={newUnidadNombre} onChange={(e) => setNewUnidadNombre(e.target.value)} placeholder="Nombre" aria-label="Nombre de la unidad" className="flex-1 rounded border border-gridline bg-cyber-black px-2 py-1 text-xs text-white placeholder:text-text-muted focus:border-acento focus:outline-none" />
+                  <input type="text" value={newUnidadSimbolo} onChange={(e) => setNewUnidadSimbolo(e.target.value)} placeholder="Símbolo" aria-label="Símbolo de la unidad" className="w-20 rounded border border-gridline bg-cyber-black px-2 py-1 text-xs text-white placeholder:text-text-muted focus:border-acento focus:outline-none" />
+                  <button onClick={handleAddUnidad} className="text-acento hover:text-white text-xs">Crear</button>
+                  <button onClick={() => setShowNewUnidad(false)} className="text-text-muted hover:text-white text-xs">Cancelar</button>
+                </div>
+              ) : (
+                <button onClick={() => setShowNewUnidad(true)} className="mt-2 text-xs text-acento hover:text-white">+ Nueva unidad</button>
+              )}
+            </div>
+
+            <button onClick={handleSaveAlarm} disabled={savingAlarm} className="w-full rounded bg-acento/20 px-4 py-2 text-sm text-acento hover:bg-acento/30 disabled:opacity-50">
+              {savingAlarm ? 'Guardando...' : 'Guardar configuración'}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

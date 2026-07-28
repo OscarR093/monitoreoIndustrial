@@ -77,6 +77,7 @@ export default function Dashboard() {
     };
 
     ws.onmessage = (e) => {
+      if (document.visibilityState !== 'visible') return;
       try {
         const datos = JSON.parse(e.data);
         const update = {};
@@ -118,9 +119,9 @@ export default function Dashboard() {
 
   const zones = useMemo(() => groupSensorsByZone(sensores), [sensores]);
 
-  const handleSensorUpdate = (id, updates) => {
+  const handleSensorUpdate = useCallback((id, updates) => {
     setSensores((prev) => prev.map((s) => (s.id === id ? { ...s, ...updates } : s)));
-  };
+  }, []);
 
   const alertCount = useMemo(() => {
     let count = 0;
